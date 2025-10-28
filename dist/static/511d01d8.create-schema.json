@@ -1,0 +1,569 @@
+[
+  {
+    "fields": [
+      {
+        "options": {
+          "placeholder": "frido-orthotics-posture-corrector"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error",
+            "message": "Product handle is required"
+          }
+        ],
+        "description": "Enter the Shopify product handle (e.g., \"frido-orthotics-posture-corrector\")",
+        "name": "productHandle",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Product name for reference",
+        "name": "productTitle",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "max",
+                "constraint": 6
+              }
+            ],
+            "level": "error",
+            "message": "Maximum 6 features allowed"
+          }
+        ],
+        "of": [
+          {
+            "fields": [
+              {
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "presence",
+                        "constraint": "required"
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 50
+                      }
+                    ],
+                    "level": "error",
+                    "message": "Title must be 50 characters or less"
+                  }
+                ],
+                "name": "title",
+                "type": "string",
+                "title": "Feature Title"
+              },
+              {
+                "rows": 2,
+                "description": "Optional detailed description",
+                "name": "description",
+                "type": "text"
+              },
+              {
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "uri",
+                        "constraint": {
+                          "options": {
+                            "scheme": [
+                              "/^http$/",
+                              "/^https$/"
+                            ],
+                            "allowRelative": false,
+                            "relativeOnly": false,
+                            "allowCredentials": false
+                          }
+                        }
+                      }
+                    ],
+                    "level": "error",
+                    "message": "Please enter a valid URL"
+                  }
+                ],
+                "description": "Icon URL (e.g., from Shopify CDN or Sanity asset)",
+                "name": "icon",
+                "type": "string",
+                "title": "Feature Icon"
+              }
+            ],
+            "type": "object",
+            "name": "feature"
+          }
+        ],
+        "name": "features",
+        "type": "array",
+        "title": "Product Features"
+      }
+    ],
+    "name": "productFeatures",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error",
+            "message": "Bank ID is required"
+          }
+        ],
+        "description": "Unique identifier for the bank (e.g., \"snapmint\", \"hdfc\")",
+        "name": "bankId",
+        "type": "string",
+        "title": "Bank ID"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Display name of the bank",
+        "name": "bankName",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "uri",
+                "constraint": {
+                  "options": {
+                    "scheme": [
+                      "/^http$/",
+                      "/^https$/"
+                    ],
+                    "allowRelative": false,
+                    "relativeOnly": false,
+                    "allowCredentials": false
+                  }
+                }
+              }
+            ],
+            "level": "error",
+            "message": "Please enter a valid URL"
+          }
+        ],
+        "description": "URL to bank logo image",
+        "name": "logo",
+        "type": "string",
+        "title": "Bank Logo"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Main offer text (e.g., \"Get 10% Cashback up to\")",
+        "name": "offerTitle",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Cashback amount (e.g., \"₹1500\")",
+        "name": "cashbackAmount",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Additional offer details (e.g., \"with NO COST EMI on Frido Pay Later\")",
+        "name": "offerDescription",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "max",
+                "constraint": 5
+              }
+            ],
+            "level": "error",
+            "message": "Maximum 5 features allowed"
+          }
+        ],
+        "description": "Key features to highlight (e.g., \"0% Interest Installments\", \"0% Extra Cost\")",
+        "of": [
+          {
+            "type": "string"
+          }
+        ],
+        "name": "keyFeatures",
+        "type": "array"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "max",
+                "constraint": 3
+              }
+            ],
+            "level": "error",
+            "message": "Maximum 3 payment schedules allowed"
+          }
+        ],
+        "of": [
+          {
+            "fields": [
+              {
+                "description": "e.g., \"1/3\", \"2/3\", \"3/3\"",
+                "name": "installment",
+                "type": "string",
+                "title": "Installment Number"
+              },
+              {
+                "description": "e.g., \"Pay Now\", \"post 30 days\"",
+                "name": "label",
+                "type": "string",
+                "title": "Payment Label"
+              },
+              {
+                "description": "Additional description for the payment",
+                "name": "description",
+                "type": "string"
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "name": "paymentSchedule",
+        "type": "array"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "min",
+                "constraint": 1
+              }
+            ],
+            "level": "error",
+            "message": "At least one term is required"
+          }
+        ],
+        "description": "List of terms and conditions",
+        "of": [
+          {
+            "type": "text"
+          }
+        ],
+        "name": "termsAndConditions",
+        "type": "array",
+        "title": "Terms and Conditions"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Offer start date",
+        "name": "validFrom",
+        "type": "date"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Offer end date",
+        "name": "validTo",
+        "type": "date"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Maximum cashback amount (e.g., \"₹1500\")",
+        "name": "maxCashback",
+        "type": "string",
+        "title": "Maximum Cashback"
+      }
+    ],
+    "name": "bankOfferDetails",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "The Shopify product handle (slug) this description belongs to",
+        "name": "productHandle",
+        "type": "string"
+      },
+      {
+        "description": "Rich text description of the product",
+        "of": [
+          {
+            "marks": {
+              "annotations": [
+                {
+                  "fields": [
+                    {
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "uri",
+                              "constraint": {
+                                "options": {
+                                  "scheme": [
+                                    "/^http$/",
+                                    "/^https$/"
+                                  ],
+                                  "allowRelative": false,
+                                  "relativeOnly": false,
+                                  "allowCredentials": false
+                                }
+                              }
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "name": "href",
+                      "type": "url",
+                      "title": "URL"
+                    }
+                  ],
+                  "name": "link",
+                  "type": "object",
+                  "title": "URL"
+                }
+              ],
+              "decorators": [
+                {
+                  "value": "strong",
+                  "title": "Strong"
+                },
+                {
+                  "value": "em",
+                  "title": "Emphasis"
+                },
+                {
+                  "value": "code",
+                  "title": "Code"
+                }
+              ]
+            },
+            "lists": [
+              {
+                "value": "bullet",
+                "title": "Bullet"
+              },
+              {
+                "value": "number",
+                "title": "Number"
+              }
+            ],
+            "styles": [
+              {
+                "value": "normal",
+                "title": "Normal"
+              },
+              {
+                "value": "h1",
+                "title": "H1"
+              },
+              {
+                "value": "h2",
+                "title": "H2"
+              },
+              {
+                "value": "h3",
+                "title": "H3"
+              },
+              {
+                "value": "blockquote",
+                "title": "Quote"
+              }
+            ],
+            "of": [],
+            "type": "block"
+          }
+        ],
+        "name": "description",
+        "type": "array"
+      },
+      {
+        "description": "Detailed product specifications and information",
+        "fields": [
+          {
+            "name": "mrp",
+            "type": "string",
+            "title": "MRP (Inclusive of all taxes)"
+          },
+          {
+            "name": "manufacturerName",
+            "type": "string",
+            "title": "Manufacturer's Name"
+          },
+          {
+            "name": "manufacturerAddress",
+            "type": "text",
+            "title": "Manufacturer's Address"
+          },
+          {
+            "name": "countryOfOrigin",
+            "type": "string",
+            "title": "Country of Origin"
+          },
+          {
+            "name": "phone",
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "type": "string"
+          },
+          {
+            "name": "cin",
+            "type": "string",
+            "title": "CIN"
+          },
+          {
+            "name": "weight",
+            "type": "string"
+          },
+          {
+            "name": "dimensions",
+            "type": "string"
+          },
+          {
+            "name": "material",
+            "type": "string"
+          },
+          {
+            "name": "color",
+            "type": "string"
+          },
+          {
+            "name": "warranty",
+            "type": "string"
+          }
+        ],
+        "name": "productDetails",
+        "type": "object"
+      },
+      {
+        "description": "Return and refund policy information",
+        "name": "returnsAndRefunds",
+        "type": "text",
+        "title": "Return and Refund Policy"
+      },
+      {
+        "description": "Instructions for caring and maintaining the product",
+        "name": "careInstructions",
+        "type": "text"
+      }
+    ],
+    "name": "productDescription",
+    "type": "document"
+  }
+]
