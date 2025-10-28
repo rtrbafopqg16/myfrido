@@ -7,14 +7,6 @@
       "maxDuration": 30
     }
   },
-  "env": {
-    "NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN": "@shopify_store_domain",
-    "NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN": "@shopify_access_token",
-    "NEXT_PUBLIC_SHOPIFY_STOREFRONT_API_VERSION": "@shopify_api_version",
-    "NEXT_PUBLIC_SANITY_PROJECT_ID": "@sanity_project_id",
-    "NEXT_PUBLIC_SANITY_DATASET": "@sanity_dataset",
-    "SANITY_API_TOKEN": "@sanity_api_token"
-  },
   "headers": [
     {
       "source": "/api/(.*)",
