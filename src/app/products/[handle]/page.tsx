@@ -16,6 +16,7 @@ import StickyButtons from '@/components/StickyButtons';
 import ProductDescriptionAccordion from '@/components/ProductDescriptionAccordion';
 import ProductHighlights from '@/components/ProductHighlights';
 import ProductFAQs from '@/components/ProductFAQs';
+import ProductPageSkeleton from '@/components/ProductPageSkeleton';
 
 export default function ProductPage() {
   const params = useParams();
@@ -35,46 +36,51 @@ export default function ProductPage() {
 
   useEffect(() => {
     const fetchProductAndFeatures = async () => {
+      if (!params.handle) return;
+
       try {
-        // Fetch product from Shopify
-        const response = await fetch(`/api/products/${params.handle}`);
-        if (response.ok) {
-          const data = await response.json();
+        // Start both API calls in parallel for better performance
+        const [shopifyResponse, sanityResponse] = await Promise.allSettled([
+          fetch(`/api/products/${params.handle}`),
+          fetch(`/api/sanity/${params.handle}?type=all`, {
+            // Add caching headers
+            headers: {
+              'Cache-Control': 'max-age=300',
+            },
+          })
+        ]);
+
+        // Handle Shopify response
+        if (shopifyResponse.status === 'fulfilled' && shopifyResponse.value.ok) {
+          const data = await shopifyResponse.value.json();
           console.log('Product page - API Response:', data);
           setProduct(data);
           if (data.variants && data.variants.nodes && data.variants.nodes.length > 0) {
             setSelectedVariant(data.variants.nodes[0].id);
           }
+          // Show product immediately when Shopify data is ready
+          setIsLoading(false);
         }
 
-        // Fetch product features, description, highlights, and FAQs from Sanity CMS via API
-        if (params.handle) {
-          try {
-            const sanityResponse = await fetch(`/api/sanity/${params.handle}?type=all`);
-            if (sanityResponse.ok) {
-              const sanityData = await sanityResponse.json();
-              console.log('Sanity data received:', sanityData);
-              setProductFeatures(sanityData.features);
-              setProductDescription(sanityData.description);
-              setProductHighlights(sanityData.highlights);
-              setProductFAQs(sanityData.faqs);
-            } else {
-              console.warn('Failed to fetch Sanity data:', sanityResponse.status);
-            }
-          } catch (sanityError) {
-            console.error('Error fetching Sanity data:', sanityError);
-          }
+        // Handle Sanity response (non-blocking)
+        if (sanityResponse.status === 'fulfilled' && sanityResponse.value.ok) {
+          const sanityData = await sanityResponse.value.json();
+          console.log('Sanity data received:', sanityData);
+          setProductFeatures(sanityData.features);
+          setProductDescription(sanityData.description);
+          setProductHighlights(sanityData.highlights);
+          setProductFAQs(sanityData.faqs);
+        } else if (sanityResponse.status === 'rejected') {
+          console.warn('Failed to fetch Sanity data:', sanityResponse.reason);
         }
+
       } catch (error) {
         console.error('Error fetching product or features:', error);
-      } finally {
         setIsLoading(false);
       }
     };
 
-    if (params.handle) {
-      fetchProductAndFeatures();
-    }
+    fetchProductAndFeatures();
   }, [params.handle]);
 
   const formatPrice = (amount: string, currencyCode: string) => {
@@ -179,28 +185,7 @@ export default function ProductPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="animate-pulse">
-              <div className="bg-gray-200 rounded-lg h-96 mb-4"></div>
-              <div className="flex space-x-2">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-gray-200 rounded h-20 w-20"></div>
-                ))}
-              </div>
-            </div>
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              <div className="h-4 bg-gray-200 rounded w-full"></div>
-              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <ProductPageSkeleton />;
   }
 
   // Debug info
@@ -326,7 +311,7 @@ export default function ProductPage() {
                 
               </div>
               <div className="h-[38px] pl-[20px] border-l border-[#ddd]">
-              <OptimizedImage src="https://cdn.shopify.com/s/files/1/0553/0419/2034/files/Frido_Pay_Later_LOGO_1.png" alt="payLater" width={24} height={24} className='h-full' />
+              <OptimizedImage src="https://cdn.shopify.com/s/files/1/0553/0419/2034/files/Frido_Pay_Later_LOGO_1.png" alt="payLater" width={24} height={24} className='h-[38px]' />
 
               </div>
               </div>

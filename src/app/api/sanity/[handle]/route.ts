@@ -1,5 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProductFeatures, getProductDescription, getProductHighlights, getProductFAQs } from '@/lib/sanity';
+import { client } from '@/lib/sanity';
+
+// Single optimized query to fetch all product data at once
+const PRODUCT_DATA_QUERY = `
+  {
+    "features": *[_type == "productFeatures" && productHandle == $productHandle][0] {
+      _id,
+      _type,
+      productHandle,
+      features[] {
+        _key,
+        title,
+        description,
+        icon
+      }
+    },
+    "description": *[_type == "productDescription" && productHandle == $productHandle][0] {
+      _id,
+      _type,
+      productHandle,
+      description,
+      productDetails,
+      returnsAndRefunds,
+      careInstructions
+    },
+    "highlights": *[_type == "productHighlights" && productHandle == $productHandle][0] {
+      _id,
+      _type,
+      productHandle,
+      title,
+      highlights[] {
+        _key,
+        image,
+        title,
+        description
+      }
+    },
+    "faqs": *[_type == "productFAQs" && productHandle == $productHandle][0] {
+      _id,
+      _type,
+      productHandle,
+      title,
+      faqs[] {
+        _key,
+        question,
+        answer
+      }
+    }
+  }
+`;
+
+// Cache for storing results (in-memory cache)
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function GET(
   request: NextRequest,
@@ -8,7 +61,7 @@ export async function GET(
   try {
     const { handle } = await params;
     const url = new URL(request.url);
-    const type = url.searchParams.get('type');
+    const type = url.searchParams.get('type') || 'all';
 
     // Validate environment variables
     if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) {
@@ -27,41 +80,61 @@ export async function GET(
       );
     }
 
+    // Check cache first
+    const cacheKey = `${handle}-${type}`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`Returning cached data for ${handle}`);
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'public, max-age=300', // 5 minutes
+          'X-Cache': 'HIT'
+        }
+      });
+    }
+
     console.log(`Fetching Sanity data for product: ${handle}, type: ${type}`);
 
     let result = null;
 
-    switch (type) {
-      case 'features':
-        result = await getProductFeatures(handle);
-        break;
-      case 'description':
-        result = await getProductDescription(handle);
-        break;
-      case 'highlights':
-        result = await getProductHighlights(handle);
-        break;
-      case 'faqs':
-        result = await getProductFAQs(handle);
-        break;
-      case 'all':
-        const [features, description, highlights, faqs] = await Promise.all([
-          getProductFeatures(handle),
-          getProductDescription(handle),
-          getProductHighlights(handle),
-          getProductFAQs(handle)
-        ]);
-        result = { features, description, highlights, faqs };
-        break;
-      default:
+    if (type === 'all') {
+      // Single optimized query for all data
+      const startTime = Date.now();
+      result = await client.fetch(PRODUCT_DATA_QUERY, { productHandle: handle });
+      const fetchTime = Date.now() - startTime;
+      console.log(`Single query completed in ${fetchTime}ms`);
+    } else {
+      // Individual queries for specific types
+      const queries = {
+        features: `*[_type == "productFeatures" && productHandle == $productHandle][0] { _id, _type, productHandle, features[] { _key, title, description, icon } }`,
+        description: `*[_type == "productDescription" && productHandle == $productHandle][0] { _id, _type, productHandle, description, productDetails, returnsAndRefunds, careInstructions }`,
+        highlights: `*[_type == "productHighlights" && productHandle == $productHandle][0] { _id, _type, productHandle, title, highlights[] { _key, image, title, description } }`,
+        faqs: `*[_type == "productFAQs" && productHandle == $productHandle][0] { _id, _type, productHandle, title, faqs[] { _key, question, answer } }`
+      };
+
+      if (!queries[type as keyof typeof queries]) {
         return NextResponse.json(
           { error: 'Invalid type parameter. Use: features, description, highlights, faqs, or all' },
           { status: 400 }
         );
+      }
+
+      const startTime = Date.now();
+      result = await client.fetch(queries[type as keyof typeof queries], { productHandle: handle });
+      const fetchTime = Date.now() - startTime;
+      console.log(`Single ${type} query completed in ${fetchTime}ms`);
     }
 
-    console.log(`Successfully fetched Sanity data for ${handle}:`, result);
-    return NextResponse.json(result);
+    // Cache the result
+    cache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+    console.log(`Successfully fetched Sanity data for ${handle}`);
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'public, max-age=300', // 5 minutes
+        'X-Cache': 'MISS'
+      }
+    });
   } catch (error) {
     console.error('Error fetching Sanity data:', error);
     

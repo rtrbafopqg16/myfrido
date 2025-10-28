@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProduct } from '@/lib/shopify';
 
+// Cache for storing results (in-memory cache)
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes for Shopify data
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ handle: string }> }
@@ -25,8 +29,23 @@ export async function GET(
       );
     }
 
+    // Check cache first
+    const cacheKey = `product-${handle}`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`Returning cached product data for ${handle}`);
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'public, max-age=120', // 2 minutes
+          'X-Cache': 'HIT'
+        }
+      });
+    }
+
     console.log(`Fetching product with handle: ${handle}`);
+    const startTime = Date.now();
     const product = await getProduct(handle);
+    const fetchTime = Date.now() - startTime;
     
     if (!product) {
       console.log(`Product not found for handle: ${handle}`);
@@ -36,8 +55,16 @@ export async function GET(
       );
     }
 
-    console.log(`Successfully fetched product: ${product.title}`);
-    return NextResponse.json(product);
+    // Cache the result
+    cache.set(cacheKey, { data: product, timestamp: Date.now() });
+
+    console.log(`Successfully fetched product: ${product.title} in ${fetchTime}ms`);
+    return NextResponse.json(product, {
+      headers: {
+        'Cache-Control': 'public, max-age=120', // 2 minutes
+        'X-Cache': 'MISS'
+      }
+    });
   } catch (error) {
     console.error('Error fetching product:', error);
     
