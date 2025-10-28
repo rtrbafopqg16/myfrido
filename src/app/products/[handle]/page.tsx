@@ -6,7 +6,8 @@ import { HeartIcon, ShareIcon, TruckIcon, ShieldCheckIcon, ArrowLeftIcon, PlayIc
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { useCart } from '@/contexts/CartContext';
 import { Product, MediaImage, Video } from '@/lib/shopify';
-import { getProductFeatures, ProductFeatures, urlFor, getProductDescription, ProductDescription, getProductHighlights, ProductHighlights as ProductHighlightsType, getProductFAQs, ProductFAQs as ProductFAQsType } from '@/lib/sanity';
+import { urlFor } from '@/lib/sanity';
+import type { ProductFeatures, ProductDescription, ProductHighlights as ProductHighlightsType, ProductFAQs as ProductFAQsType } from '@/lib/sanity';
 import OptimizedImage from '@/components/OptimizedImage';
 import OptimizedVideo from '@/components/OptimizedVideo';
 import ProductGallery from '@/components/ProductGallery';
@@ -46,18 +47,23 @@ export default function ProductPage() {
           }
         }
 
-        // Fetch product features, description, highlights, and FAQs from Sanity CMS
+        // Fetch product features, description, highlights, and FAQs from Sanity CMS via API
         if (params.handle) {
-          const [features, description, highlights, faqs] = await Promise.all([
-            getProductFeatures(params.handle as string),
-            getProductDescription(params.handle as string),
-            getProductHighlights(params.handle as string),
-            getProductFAQs(params.handle as string)
-          ]);
-          setProductFeatures(features);
-          setProductDescription(description);
-          setProductHighlights(highlights);
-          setProductFAQs(faqs);
+          try {
+            const sanityResponse = await fetch(`/api/sanity/${params.handle}?type=all`);
+            if (sanityResponse.ok) {
+              const sanityData = await sanityResponse.json();
+              console.log('Sanity data received:', sanityData);
+              setProductFeatures(sanityData.features);
+              setProductDescription(sanityData.description);
+              setProductHighlights(sanityData.highlights);
+              setProductFAQs(sanityData.faqs);
+            } else {
+              console.warn('Failed to fetch Sanity data:', sanityResponse.status);
+            }
+          } catch (sanityError) {
+            console.error('Error fetching Sanity data:', sanityError);
+          }
         }
       } catch (error) {
         console.error('Error fetching product or features:', error);
