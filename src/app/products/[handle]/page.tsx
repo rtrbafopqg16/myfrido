@@ -9,7 +9,7 @@ import { Product, MediaImage, Video } from '@/lib/shopify';
 import { urlFor } from '@/lib/sanity';
 import type { ProductFeatures, ProductDescription, ProductHighlights as ProductHighlightsType, ProductFAQs as ProductFAQsType, ProductGallery as ProductGalleryType } from '@/lib/sanity';
 import OptimizedImage from '@/components/OptimizedImage';
-import OptimizedVideo from '@/components/OptimizedVideo';
+
 import ProductGallery from '@/components/ProductGalleryOptimized';
 import BankOffers from '@/components/BankOffers';
 import StickyButtons from '@/components/StickyButtons';
@@ -307,7 +307,7 @@ export default function ProductPage() {
                 <div className='flex items-center gap-[4px]'>
                 <p className="text-[#99b6a0] text-[14px] "><strong className='text-[#000]'>₹281/month</strong> at <b className='text-[#000]'>0% EMI</b> on</p>
                 <div className="flex items-center h-[11px]">
-                  <OptimizedImage src="https://cdn.shopify.com/s/files/1/0553/0419/2034/files/UPI_Logo_nopadding_54e42ac1-1693-4bfa-b2df-f7b1aaf09dbb.png" alt="UPI" width={24} height={24} className='h-full' />
+                  <img src="https://cdn.shopify.com/s/files/1/0553/0419/2034/files/UPI_Logo_nopadding_54e42ac1-1693-4bfa-b2df-f7b1aaf09dbb.png" alt="UPI" className='h-full' />
                 </div>
                 </div>
                 

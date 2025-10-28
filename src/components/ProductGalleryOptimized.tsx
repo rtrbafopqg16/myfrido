@@ -6,6 +6,8 @@ import { Product, MediaImage, Video } from '@/lib/shopify';
 import { ProductGallery as SanityGallery, SanityImage, urlFor } from '@/lib/sanity';
 import OptimizedImage from './OptimizedImage';
 import OptimizedVideo from './OptimizedVideo';
+import { GalleryPreloader } from './PreloadManager';
+import { PerformanceMonitor } from './PerformanceMonitor';
 
 interface ProductGalleryProps {
   product?: Product;
@@ -36,7 +38,6 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  
   const mainMediaRef = useRef<HTMLDivElement>(null);
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -178,6 +179,14 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
 
   return (
     <div className={`w-full ${className}`}>
+      {/* Smart adaptive preloading for gallery images */}
+      <GalleryPreloader mediaItems={mediaItems} currentIndex={currentIndex} />
+      
+      {/* Performance monitoring (development only) */}
+      {process.env.NODE_ENV === 'development' && (
+        <PerformanceMonitor />
+      )}
+      
       {/* Mobile-first: Main Media Display */}
       <div className="relative">
         <div
@@ -198,6 +207,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
                 quality={98}
                 optimization="gallery"
                 priority={true}
+                loading="eager"
                 className="h-full w-full mobile-gallery-image md:object-cover object-center transition-opacity duration-300"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
               />
@@ -272,6 +282,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
                       height={80}
                       quality={90}
                       optimization="thumbnail"
+                      loading="eager"
                       className="h-full w-full object-cover object-center"
                       sizes="80px"
                     />
@@ -285,6 +296,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
                           height={80}
                           quality={90}
                           optimization="thumbnail"
+                          loading="eager"
                           className="h-full w-full object-cover object-center"
                           sizes="80px"
                         />
