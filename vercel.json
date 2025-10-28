@@ -1,0 +1,43 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN": "@shopify_store_domain",
+    "NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN": "@shopify_access_token",
+    "NEXT_PUBLIC_SHOPIFY_STOREFRONT_API_VERSION": "@shopify_api_version",
+    "NEXT_PUBLIC_SANITY_PROJECT_ID": "@sanity_project_id",
+    "NEXT_PUBLIC_SANITY_DATASET": "@sanity_dataset",
+    "SANITY_API_TOKEN": "@sanity_api_token"
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/products/:handle",
+      "destination": "/products/:handle"
+    }
+  ]
+}
