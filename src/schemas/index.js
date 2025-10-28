@@ -3,6 +3,7 @@ import bankOfferDetails from './bankOfferDetails';
 import productDescription from './productDescription';
 import productHighlights from './productHighlights';
 import productFAQs from './productFAQs';
+import productGallery from './productGallery';
 
 export const schemaTypes = [
   productFeatures,
@@ -10,5 +11,6 @@ export const schemaTypes = [
   productDescription,
   productHighlights,
   productFAQs,
+  productGallery,
 ];
 

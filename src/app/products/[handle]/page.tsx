@@ -7,10 +7,10 @@ import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { useCart } from '@/contexts/CartContext';
 import { Product, MediaImage, Video } from '@/lib/shopify';
 import { urlFor } from '@/lib/sanity';
-import type { ProductFeatures, ProductDescription, ProductHighlights as ProductHighlightsType, ProductFAQs as ProductFAQsType } from '@/lib/sanity';
+import type { ProductFeatures, ProductDescription, ProductHighlights as ProductHighlightsType, ProductFAQs as ProductFAQsType, ProductGallery as ProductGalleryType } from '@/lib/sanity';
 import OptimizedImage from '@/components/OptimizedImage';
 import OptimizedVideo from '@/components/OptimizedVideo';
-import ProductGallery from '@/components/ProductGallery';
+import ProductGallery from '@/components/ProductGalleryOptimized';
 import BankOffers from '@/components/BankOffers';
 import StickyButtons from '@/components/StickyButtons';
 import ProductDescriptionAccordion from '@/components/ProductDescriptionAccordion';
@@ -26,6 +26,7 @@ export default function ProductPage() {
   const [productDescription, setProductDescription] = useState<ProductDescription | null>(null);
   const [productHighlights, setProductHighlights] = useState<ProductHighlightsType | null>(null);
   const [productFAQs, setProductFAQs] = useState<ProductFAQsType | null>(null);
+  const [productGallery, setProductGallery] = useState<ProductGalleryType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
@@ -70,6 +71,7 @@ export default function ProductPage() {
           setProductDescription(sanityData.description);
           setProductHighlights(sanityData.highlights);
           setProductFAQs(sanityData.faqs);
+          setProductGallery(sanityData.gallery);
         } else if (sanityResponse.status === 'rejected') {
           console.warn('Failed to fetch Sanity data:', sanityResponse.reason);
         }
@@ -220,7 +222,7 @@ export default function ProductPage() {
       <div className="max-w-md mx-auto">
         {/* Product Gallery */}
         <div className="">
-            <ProductGallery product={product} />
+            <ProductGallery product={product} sanityGallery={productGallery} />
           </div>
         <div className="p-[20px] flex flex-col gap-[20px] bg-[#fff]">
           {/* Rating and Hot Selling Section */}
@@ -311,7 +313,7 @@ export default function ProductPage() {
                 
               </div>
               <div className="h-[38px] pl-[20px] border-l border-[#ddd]">
-              <OptimizedImage src="https://cdn.shopify.com/s/files/1/0553/0419/2034/files/Frido_Pay_Later_LOGO_1.png" alt="payLater" width={24} height={24} className='h-[38px]' />
+              <img src="https://cdn.shopify.com/s/files/1/0553/0419/2034/files/Frido_Pay_Later_LOGO_1.png" alt="payLater" className='h-[38px]' />
 
               </div>
               </div>

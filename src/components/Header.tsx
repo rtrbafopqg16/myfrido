@@ -29,7 +29,7 @@ export default function Header() {
             {/* Logo */}
             <div className="flex items-center">
               <Link href="/" className="flex items-center h-[24px]">
-                <OptimizedImage src="/logo.png" alt="Logo" width={100} height={100}  className='h-full'/>
+                <img src="/logo.png" alt="Logo" className='h-full'/>
               </Link>
             </div>
 

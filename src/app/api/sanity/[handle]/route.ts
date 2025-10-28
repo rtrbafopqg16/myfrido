@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { client } from '@/lib/sanity';
+import { client, getProductGallery } from '@/lib/sanity';
 
 // Single optimized query to fetch all product data at once
 const PRODUCT_DATA_QUERY = `
@@ -45,6 +45,37 @@ const PRODUCT_DATA_QUERY = `
         _key,
         question,
         answer
+      }
+    },
+    "gallery": *[_type == "productGallery" && productHandle == $productHandle][0] {
+      _id,
+      _type,
+      productHandle,
+      title,
+      mediaItems[] {
+        _key,
+        type,
+        image {
+          asset,
+          alt,
+          caption
+        },
+        videoUrl,
+        videoSources[] {
+          url,
+          format,
+          mimeType
+        },
+        previewImage {
+          asset,
+          alt
+        },
+        order
+      },
+      settings {
+        autoplay,
+        showThumbnails,
+        enableSwipe
       }
     }
   }
@@ -109,12 +140,13 @@ export async function GET(
         features: `*[_type == "productFeatures" && productHandle == $productHandle][0] { _id, _type, productHandle, features[] { _key, title, description, icon } }`,
         description: `*[_type == "productDescription" && productHandle == $productHandle][0] { _id, _type, productHandle, description, productDetails, returnsAndRefunds, careInstructions }`,
         highlights: `*[_type == "productHighlights" && productHandle == $productHandle][0] { _id, _type, productHandle, title, highlights[] { _key, image, title, description } }`,
-        faqs: `*[_type == "productFAQs" && productHandle == $productHandle][0] { _id, _type, productHandle, title, faqs[] { _key, question, answer } }`
+        faqs: `*[_type == "productFAQs" && productHandle == $productHandle][0] { _id, _type, productHandle, title, faqs[] { _key, question, answer } }`,
+        gallery: `*[_type == "productGallery" && productHandle == $productHandle][0] { _id, _type, productHandle, title, mediaItems[] { _key, type, image { asset, alt, caption }, videoUrl, videoSources[] { url, format, mimeType }, previewImage { asset, alt }, order }, settings { autoplay, showThumbnails, enableSwipe } }`
       };
 
       if (!queries[type as keyof typeof queries]) {
         return NextResponse.json(
-          { error: 'Invalid type parameter. Use: features, description, highlights, faqs, or all' },
+          { error: 'Invalid type parameter. Use: features, description, highlights, faqs, gallery, or all' },
           { status: 400 }
         );
       }

@@ -187,6 +187,31 @@ export interface ProductFAQs {
   }>;
 }
 
+export interface ProductGallery {
+  _id: string;
+  _type: 'productGallery';
+  productHandle: string;
+  title?: string;
+  mediaItems: Array<{
+    _key: string;
+    type: 'image' | 'video';
+    image?: SanityImage;
+    videoUrl?: string;
+    videoSources?: Array<{
+      url: string;
+      format: string;
+      mimeType: string;
+    }>;
+    previewImage?: SanityImage;
+    order?: number;
+  }>;
+  settings?: {
+    autoplay?: boolean;
+    showThumbnails?: boolean;
+    enableSwipe?: boolean;
+  };
+}
+
 // Helper function to get image URL
 export function urlFor(source: SanityImage) {
   return builder.image(source);
@@ -395,6 +420,40 @@ const BANK_OFFER_DETAILS_QUERY = `
   }
 `;
 
+const PRODUCT_GALLERY_QUERY = `
+  *[_type == "productGallery" && productHandle == $productHandle][0] {
+    _id,
+    _type,
+    productHandle,
+    title,
+    mediaItems[] {
+      _key,
+      type,
+      image {
+        asset,
+        alt,
+        caption
+      },
+      videoUrl,
+      videoSources[] {
+        url,
+        format,
+        mimeType
+      },
+      previewImage {
+        asset,
+        alt
+      },
+      order
+    },
+    settings {
+      autoplay,
+      showThumbnails,
+      enableSwipe
+    }
+  }
+`;
+
 // API functions
 export async function getHeroSections(): Promise<HeroSection[]> {
   return await client.fetch(HERO_SECTIONS_QUERY);
@@ -442,6 +501,10 @@ export async function getProductHighlights(productHandle: string): Promise<Produ
 
 export async function getProductFAQs(productHandle: string): Promise<ProductFAQs | null> {
   return await client.fetch(PRODUCT_FAQS_QUERY, { productHandle });
+}
+
+export async function getProductGallery(productHandle: string): Promise<ProductGallery | null> {
+  return await client.fetch(PRODUCT_GALLERY_QUERY, { productHandle });
 }
 
 export { client };
