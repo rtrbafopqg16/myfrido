@@ -25,7 +25,7 @@ export default function StickyButtons({
           <button
             onClick={onAddToCart}
             disabled={disabled || isAddingToCart}
-            className="flex-1 bg-black text-white font-semibold py-3 px-4 rounded-lg uppercase text-sm tracking-wide hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+            className="flex-1 h-[56px] bg-black text-white font-semibold py-3 px-4 rounded-[12px] uppercase text-[16px] tracking-wide hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
           >
             {isAddingToCart ? (
               <>
@@ -41,7 +41,7 @@ export default function StickyButtons({
           <button
             onClick={onBuyNow}
             disabled={disabled || isDirectCheckout}
-            className="flex-1 bg-yellow-400 text-black font-semibold py-3 px-4 rounded-lg uppercase text-sm tracking-wide hover:bg-yellow-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+            className="flex-1 bg-[#FFD100] h-[56px] text-black font-semibold py-3 px-4 rounded-[12px] uppercase text-[16px] tracking-wide hover:bg-yellow-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
           >
             {isDirectCheckout ? (
               <>

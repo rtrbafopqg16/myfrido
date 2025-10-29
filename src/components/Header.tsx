@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { ShoppingCartIcon, Bars3Icon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
@@ -20,6 +20,18 @@ export default function Header() {
   const { getCartItemCount } = useCart();
 
   const cartItemCount = getCartItemCount();
+
+  // Listen for cart drawer open event
+  useEffect(() => {
+    const handleOpenCartDrawer = () => {
+      setCartOpen(true);
+    };
+
+    window.addEventListener('openCartDrawer', handleOpenCartDrawer);
+    return () => {
+      window.removeEventListener('openCartDrawer', handleOpenCartDrawer);
+    };
+  }, []);
 
   return (
     <>

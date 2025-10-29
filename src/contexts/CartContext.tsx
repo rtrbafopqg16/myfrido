@@ -114,8 +114,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       
       let cartId = state.cart?.id;
       if (!cartId) {
-        await createNewCart();
-        cartId = state.cart?.id;
+        // Wait for cart to be created and get the new cart ID
+        const response = await fetch('/api/cart', { method: 'POST' });
+        if (!response.ok) {
+          throw new Error('Failed to create cart');
+        }
+        const { cart: newCart } = await response.json();
+        cartId = newCart.id;
+        if (cartId) {
+          localStorage.setItem('shopify-cart-id', cartId);
+        }
+        dispatch({ type: 'SET_CART', payload: newCart });
       }
 
       if (!cartId) {
@@ -133,6 +142,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.log('Cart after adding item:', cart);
         console.log('Cart line items:', cart.lines.nodes);
         dispatch({ type: 'SET_CART', payload: cart });
+        
+        // Trigger cart drawer open event
+        window.dispatchEvent(new CustomEvent('openCartDrawer'));
       } else {
         const errorData = await response.json();
         console.error('Failed to add item to cart:', errorData);
