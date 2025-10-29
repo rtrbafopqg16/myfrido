@@ -212,6 +212,30 @@ export interface ProductGallery {
   };
 }
 
+export interface ProductGuides {
+  _id: string;
+  _type: 'productGuides';
+  productHandle: string;
+  howToUse?: {
+    title: string;
+    videoUrl: string;
+    thumbnail?: SanityImage;
+    steps?: Array<{
+      stepNumber: number;
+      title: string;
+      description: string;
+    }>;
+  };
+  sizeChart?: {
+    title: string;
+    tabs: Array<{
+      tabName: string;
+      image: SanityImage;
+      description?: string;
+    }>;
+  };
+}
+
 // Helper function to get image URL
 export function urlFor(source: SanityImage) {
   return builder.image(source);
@@ -454,6 +478,38 @@ const PRODUCT_GALLERY_QUERY = `
   }
 `;
 
+const PRODUCT_GUIDES_QUERY = `
+  *[_type == "productGuides" && productHandle == $productHandle][0] {
+    _id,
+    _type,
+    productHandle,
+    howToUse {
+      title,
+      videoUrl,
+      thumbnail {
+        asset,
+        alt
+      },
+      steps[] {
+        stepNumber,
+        title,
+        description
+      }
+    },
+    sizeChart {
+      title,
+      tabs[] {
+        tabName,
+        image {
+          asset,
+          alt
+        },
+        description
+      }
+    }
+  }
+`;
+
 // API functions
 export async function getHeroSections(): Promise<HeroSection[]> {
   return await client.fetch(HERO_SECTIONS_QUERY);
@@ -505,6 +561,10 @@ export async function getProductFAQs(productHandle: string): Promise<ProductFAQs
 
 export async function getProductGallery(productHandle: string): Promise<ProductGallery | null> {
   return await client.fetch(PRODUCT_GALLERY_QUERY, { productHandle });
+}
+
+export async function getProductGuides(productHandle: string): Promise<ProductGuides | null> {
+  return await client.fetch(PRODUCT_GUIDES_QUERY, { productHandle });
 }
 
 export { client };

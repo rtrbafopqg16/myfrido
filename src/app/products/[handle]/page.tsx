@@ -7,7 +7,7 @@ import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { useCart } from '@/contexts/CartContext';
 import { Product, MediaImage, Video } from '@/lib/shopify';
 import { urlFor } from '@/lib/sanity';
-import type { ProductFeatures, ProductDescription, ProductHighlights as ProductHighlightsType, ProductFAQs as ProductFAQsType, ProductGallery as ProductGalleryType } from '@/lib/sanity';
+import type { ProductFeatures, ProductDescription, ProductHighlights as ProductHighlightsType, ProductFAQs as ProductFAQsType, ProductGallery as ProductGalleryType, ProductGuides } from '@/lib/sanity';
 import OptimizedImage from '@/components/OptimizedImage';
 
 import ProductGallery from '@/components/ProductGalleryOptimized';
@@ -17,6 +17,8 @@ import ProductDescriptionAccordion from '@/components/ProductDescriptionAccordio
 import ProductHighlights from '@/components/ProductHighlights';
 import ProductFAQs from '@/components/ProductFAQs';
 import ProductPageSkeleton from '@/components/ProductPageSkeleton';
+import HowToUsePopup from '@/components/HowToUsePopup';
+import SizeChartPopup from '@/components/SizeChartPopup';
 
 export default function ProductPage() {
   const params = useParams();
@@ -27,7 +29,10 @@ export default function ProductPage() {
   const [productHighlights, setProductHighlights] = useState<ProductHighlightsType | null>(null);
   const [productFAQs, setProductFAQs] = useState<ProductFAQsType | null>(null);
   const [productGallery, setProductGallery] = useState<ProductGalleryType | null>(null);
+  const [productGuides, setProductGuides] = useState<ProductGuides | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHowToUseOpen, setIsHowToUseOpen] = useState(false);
+  const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [selectedCombo, setSelectedCombo] = useState<'single' | 'double'>('single');
@@ -72,6 +77,7 @@ export default function ProductPage() {
           setProductHighlights(sanityData.highlights);
           setProductFAQs(sanityData.faqs);
           setProductGallery(sanityData.gallery);
+          setProductGuides(sanityData.guides);
         } else if (sanityResponse.status === 'rejected') {
           console.warn('Failed to fetch Sanity data:', sanityResponse.reason);
         }
@@ -94,33 +100,81 @@ export default function ProductPage() {
     }).format(parseFloat(amount));
   };
 
+  // Get current variant's price info
+  const getCurrentVariantPrice = () => {
+    if (!product || !selectedVariant) {
+      return {
+        price: parseFloat(product?.priceRange.minVariantPrice.amount || '0'),
+        compareAtPrice: product?.compareAtPriceRange?.minVariantPrice ? parseFloat(product.compareAtPriceRange.minVariantPrice.amount) : null,
+        currencyCode: product?.priceRange.minVariantPrice.currencyCode || 'INR'
+      };
+    }
+    
+    const variant = product.variants?.nodes?.find(v => v.id === selectedVariant);
+    if (!variant) {
+      return {
+        price: parseFloat(product.priceRange.minVariantPrice.amount),
+        compareAtPrice: product.compareAtPriceRange?.minVariantPrice ? parseFloat(product.compareAtPriceRange.minVariantPrice.amount) : null,
+        currencyCode: product.priceRange.minVariantPrice.currencyCode
+      };
+    }
+    
+    return {
+      price: parseFloat(variant.price.amount),
+      compareAtPrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
+      currencyCode: variant.price.currencyCode
+    };
+  };
+
   // Combo pricing calculations
   const getComboPricing = () => {
-    if (!product) {
+    if (!product || !selectedVariant) {
       return {
         singlePrice: 0,
         doublePrice: 0,
         savings: 0,
-        originalDoublePrice: 0
+        originalDoublePrice: 0,
+        currencyCode: product?.priceRange.minVariantPrice.currencyCode || 'INR'
       };
     }
     
-    const singlePrice = parseFloat(product.priceRange.minVariantPrice.amount);
-    const doublePrice = singlePrice * 2;
-    const discountAmount = doublePrice * 0.4; // 40% discount
-    const finalDoublePrice = doublePrice - discountAmount;
-    const savings = doublePrice - finalDoublePrice;
+    // Get the actual selected variant's price
+    const variant = product.variants?.nodes?.find(v => v.id === selectedVariant);
+    if (!variant) {
+      return {
+        singlePrice: 0,
+        doublePrice: 0,
+        savings: 0,
+        originalDoublePrice: 0,
+        currencyCode: product.priceRange.minVariantPrice.currencyCode
+      };
+    }
+    
+    const singlePrice = parseFloat(variant.price.amount);
+    const packDiscount = 99; // Fixed discount for pack of 2
+    const originalDoublePrice = singlePrice * 2; // Original price for 2 units
+    const finalDoublePrice = originalDoublePrice - packDiscount; // Final price for 2 units (₹99 discount)
+    const savings = packDiscount; // Fixed ₹99 savings
     
     return {
       singlePrice,
       doublePrice: finalDoublePrice,
       savings,
-      originalDoublePrice: doublePrice
+      originalDoublePrice,
+      currencyCode: variant.price.currencyCode
     };
   };
 
   const handleAddToCart = async () => {
     if (!selectedVariant) return;
+    
+    // Verify the selected variant before adding
+    const variant = product?.variants?.nodes?.find(v => v.id === selectedVariant);
+    console.log('Adding to cart - Selected variant:', {
+      variantId: selectedVariant,
+      variantTitle: variant?.title,
+      options: variant?.selectedOptions
+    });
     
     setIsAddingToCart(true);
     try {
@@ -208,11 +262,15 @@ export default function ProductPage() {
     );
   }
 
-  const hasDiscount = product.compareAtPriceRange && 
-    parseFloat(product.compareAtPriceRange.minVariantPrice.amount) > parseFloat(product.priceRange.minVariantPrice.amount);
+  // Get current variant pricing
+  const currentVariantPrice = getCurrentVariantPrice();
+  const pricing = getComboPricing();
+
+  const hasDiscount = currentVariantPrice.compareAtPrice && 
+    currentVariantPrice.compareAtPrice > currentVariantPrice.price;
 
   const discountPercentage = hasDiscount ? 
-    Math.round(((parseFloat(product.compareAtPriceRange!.minVariantPrice.amount) - parseFloat(product.priceRange.minVariantPrice.amount)) / parseFloat(product.compareAtPriceRange!.minVariantPrice.amount)) * 100) : 0;
+    Math.round(((currentVariantPrice.compareAtPrice! - currentVariantPrice.price) / currentVariantPrice.compareAtPrice!) * 100) : 0;
 
   // Get media items (images and videos)
   const mediaItems = product.media?.nodes || [];
@@ -273,13 +331,13 @@ export default function ProductPage() {
           <div className="">
             <div className="flex items-center space-x-[12px]">
               <span className="text-[24px] font-semibold leading-[1] text-gray-900">
-                  {formatPrice(product.priceRange.minVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode)}
+                  {formatPrice(currentVariantPrice.price.toString(), currentVariantPrice.currencyCode)}
                 </span>
                 {hasDiscount && (
                 <div className="flex items-center space-x-[4px]">
                   <span className='text-[14px] text-[#808080]'>MRP</span>
                   <span className="text-[14px] text-[#808080] line-through">
-                      {formatPrice(product.compareAtPriceRange!.minVariantPrice.amount, product.compareAtPriceRange!.minVariantPrice.currencyCode)}
+                      {formatPrice(currentVariantPrice.compareAtPrice!.toString(), currentVariantPrice.currencyCode)}
                     </span>
                   <span className="bg-black text-white text-[13px] leading-none rounded-[4px] p-[4px] font-medium ml-[8px] ">
                     {discountPercentage}% OFF
@@ -373,12 +431,38 @@ export default function ProductPage() {
                         <button
                           key={value}
                         onClick={() => {
-                          // Find the variant that matches this option value
-                          const variant = product.variants?.nodes?.find(v => 
-                            v.selectedOptions.some(so => so.name === option.name && so.value === value)
-                          );
+                          // Get currently selected variant to preserve other options
+                          const currentVariant = product.variants?.nodes?.find(v => v.id === selectedVariant);
+                          
+                          // Find the variant that matches ALL selected options
+                          // First, build a map of what options should be selected
+                          const optionsToMatch = new Map<string, string>();
+                          
+                          // Preserve other options from current selection
+                          if (currentVariant) {
+                            currentVariant.selectedOptions.forEach(opt => {
+                              if (opt.name !== option.name) {
+                                optionsToMatch.set(opt.name, opt.value);
+                              }
+                            });
+                          }
+                          
+                          // Set the new option value
+                          optionsToMatch.set(option.name, value);
+                          
+                          // Find variant that matches ALL options
+                          const variant = product.variants?.nodes?.find(v => {
+                            // Check if variant has all the required options
+                            return Array.from(optionsToMatch.entries()).every(([optName, optValue]) => 
+                              v.selectedOptions.some(so => so.name === optName && so.value === optValue)
+                            ) && v.selectedOptions.length === optionsToMatch.size;
+                          });
+                          
                           if (variant) {
                             setSelectedVariant(variant.id);
+                            console.log('Selected variant:', variant.id, variant.selectedOptions);
+                          } else {
+                            console.warn('No variant found matching options:', Array.from(optionsToMatch.entries()));
                           }
                         }}
                         className={`w-[40px] h-[40px] border-[1px] rounded-full flex items-center justify-center mb-[12px] ${
@@ -431,7 +515,6 @@ export default function ProductPage() {
                <p className="text-[#bcbcbc] font-light text-[14px]">Combo Offer: <span className="font-medium text-[#636363]">{selectedCombo === 'single' ? 'Buy 1 unit' : 'Buy 2 units'}</span></p>
               
               {(() => {
-                const pricing = getComboPricing();
                 return (
                   <>
                     {/* Buy 1 Unit Option */}
@@ -449,7 +532,7 @@ export default function ProductPage() {
                       <div className="flex justify-between items-center">
                         <span className="font-normal text-black text-[14px]">Buy 1 Unit</span>
                         <span className="font-medium text-black text-[18px]">
-                          {formatPrice(pricing.singlePrice.toString(), product.priceRange.minVariantPrice.currencyCode)}
+                          {formatPrice(pricing.singlePrice.toString(), pricing.currencyCode)}
                         </span>
                       </div>
                     </div>
@@ -476,10 +559,10 @@ export default function ProductPage() {
                           <span className="font-normal text-black text-[14px]">Buy 2 Units</span>
                           <div className="flex flex-col items-end">
                             <span className="text-[#4CAF50] text-[14px] leading-[1] mb-[4px] font-medium">
-                              SAVE {formatPrice(pricing.savings.toString(), product.priceRange.minVariantPrice.currencyCode)}
+                              SAVE {formatPrice(pricing.savings.toString(), pricing.currencyCode)}
                             </span>
                             <span className="font-semibold leading-[1] text-[18px] text-black">
-                              {formatPrice(pricing.doublePrice.toString(), product.priceRange.minVariantPrice.currencyCode)}
+                              {formatPrice(pricing.doublePrice.toString(), pricing.currencyCode)}
                             </span>
                           </div>
                         </div>
@@ -497,36 +580,56 @@ export default function ProductPage() {
             maxWidth="full"
             className=""
           />
-
-          {/* How to Use Card */}
-          <div className="bg-[#EAF2FC] rounded-[12px] p-[12px] flex items-center justify-between cursor-pointer">
-            <div className="flex items-center gap-[12px]">
-              <div className="w-[40px] h-[40px] bg-white rounded-[8px] flex items-center justify-center">
-                <svg className="w-[24px] h-[24px]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
+          <div className='flex flex-col gap-[12px]'>
+            {/* How to Use Card */}
+            <div 
+              onClick={() => setIsHowToUseOpen(true)}
+              className="bg-gradient-to-r from-[#E7F2FF] to-[#F7FAFF] rounded-[8px] p-[6px] flex items-center justify-between cursor-pointer active:scale-95 transition-transform"
+            >
+              <div className="flex items-center gap-[8px]">
+                <div className="w-[40px] h-[40px] bg-white rounded-[8px] flex items-center justify-center">
+                  <PlayIcon className="w-6 h-6 text-blue-600" />
+                </div>
+                <span className="text-[#506073] text-[16px] font-medium">How to Use?</span>
               </div>
-              <span className="text-black text-[14px] font-medium">How to Use?</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <g clipPath="url(#clip0_3301_6291)">
+                  <path d="M7 17L17 7" stroke="#506073" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17 16V7H8" stroke="#506073" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_3301_6291">
+                    <rect width="24" height="24" fill="white" transform="matrix(1 0 0 -1 0 24)"/>
+                  </clipPath>
+                </defs>
+              </svg>
             </div>
-            <svg className="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
 
-          {/* Measure your perfect fit Card */}
-          <div className="bg-[#EAF2FC] rounded-[12px] p-[12px] flex items-center justify-between cursor-pointer">
-            <div className="flex items-center gap-[12px]">
-              <div className="w-[40px] h-[40px] bg-white rounded-[8px] flex items-center justify-center">
-                <svg className="w-[24px] h-[24px]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
+            {/* Measure your perfect fit Card */}
+            <div 
+              onClick={() => setIsSizeChartOpen(true)}
+              className="bg-gradient-to-r from-[#E7F2FF] to-[#F7FAFF] rounded-[8px] p-[6px] flex items-center justify-between cursor-pointer active:scale-95 transition-transform"
+            >
+              <div className="flex items-center gap-[8px]">
+                <div className="w-[44px] h-[44px] bg-white rounded-[8px] flex items-center justify-center overflow-hidden">
+                  <OptimizedImage src="https://cdn.shopify.com/s/files/1/0553/0419/2034/files/PostureCorrector_HowtoMeasure.jpg" alt="Measure your perfect fit" width={44} height={44} />
+                </div>
+                <span className="text-[#506073] text-[16px] font-medium">Measure your perfect fit</span>
               </div>
-              <span className="text-black text-[14px] font-medium">Measure your perfect fit</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <g clipPath="url(#clip0_3301_6291)">
+                  <path d="M7 17L17 7" stroke="#506073" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17 16V7H8" stroke="#506073" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_3301_6291">
+                    <rect width="24" height="24" fill="white" transform="matrix(1 0 0 -1 0 24)"/>
+                  </clipPath>
+                </defs>
+              </svg>
             </div>
-            <svg className="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
           </div>
+          
 
           {/* Service Guarantees Section */}
           <div className="flex justify-between items-center ">
@@ -616,10 +719,49 @@ export default function ProductPage() {
             />
           )}
 
-          {/* Bottom spacing for sticky buttons */}
-          <div className="h-20"></div>
+  
         </div>
       </div>
+
+      {/* Popups */}
+      <HowToUsePopup
+        isOpen={isHowToUseOpen}
+        onClose={() => setIsHowToUseOpen(false)}
+        videoUrl={productGuides?.howToUse?.videoUrl || 'https://cdn.shopify.com/videos/c/o/v/77427aa5e95b487c85a330da1e3a81fe.mp4'}
+        productTitle={product?.title || ''}
+      />
+
+      <SizeChartPopup
+        isOpen={isSizeChartOpen}
+        onClose={() => setIsSizeChartOpen(false)}
+        tabs={
+          productGuides?.sizeChart?.tabs?.map(tab => ({
+            tabName: tab.tabName,
+            image: {
+              url: tab.image ? urlFor(tab.image).width(800).url() : 'https://cdn.shopify.com/s/files/1/0553/0419/2034/files/PostureCorrector_HowtoMeasure.jpg',
+              alt: tab.image?.alt
+            },
+            description: tab.description
+          })) || [
+            {
+              tabName: 'Product Dimensions',
+              image: {
+                url: 'https://cdn.shopify.com/s/files/1/0553/0419/2034/files/SizeGuide_PC_1.png',
+                alt: 'Product Dimensions'
+              },
+              description: ''
+            },
+            {
+              tabName: 'How to Measure',
+              image: {
+                url: 'https://cdn.shopify.com/s/files/1/0553/0419/2034/files/PostureCorrector_HowtoMeasure.jpg',
+                alt: 'How to Measure'
+              },
+              description: 'Measure around the widest part of your chest with a tape measure for the perfect fit posture support.'
+            }
+          ]
+        }
+      />
 
       {/* Sticky Buttons */}
       <StickyButtons

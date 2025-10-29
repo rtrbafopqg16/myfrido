@@ -8,6 +8,7 @@ import OptimizedImage from './OptimizedImage';
 import OptimizedVideo from './OptimizedVideo';
 import { GalleryPreloader } from './PreloadManager';
 import { PerformanceMonitor } from './PerformanceMonitor';
+import '../styles/gallery-swipe.css';
 
 interface ProductGalleryProps {
   product?: Product;
@@ -38,6 +39,10 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [previousIndex, setPreviousIndex] = useState(0);
   const mainMediaRef = useRef<HTMLDivElement>(null);
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -90,54 +95,111 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
   // Minimum swipe distance
   const minSwipeDistance = 50;
 
-  // Touch handlers for mobile swipe
+  // Enhanced touch handlers for smooth swipe animations
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!sanityGallery?.settings?.enableSwipe && sanityGallery?.settings?.enableSwipe !== false) return;
+    // Enable swipes by default, only disable if explicitly set to false
+    if (sanityGallery?.settings?.enableSwipe === false) return;
+    if (isTransitioning) return;
+    if (mediaItems.length <= 1) return; // No need to swipe if only one image
+    
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
+    setIsDragging(true);
+    setDragOffset(0);
+    setSwipeDirection(null);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!sanityGallery?.settings?.enableSwipe && sanityGallery?.settings?.enableSwipe !== false) return;
-    setTouchEnd(e.targetTouches[0].clientX);
+    // Enable swipes by default, only disable if explicitly set to false
+    if (sanityGallery?.settings?.enableSwipe === false) return;
+    if (!touchStart || isTransitioning) return;
+    if (mediaItems.length <= 1) return; // No need to swipe if only one image
+    
+    // Prevent default scrolling behavior
+    e.preventDefault();
+    
+    const currentTouch = e.targetTouches[0].clientX;
+    const diff = touchStart - currentTouch;
+    
+    // Update drag offset for visual feedback
+    setDragOffset(diff);
+    
+    // Determine swipe direction
+    if (Math.abs(diff) > 10) {
+      setSwipeDirection(diff > 0 ? 'left' : 'right');
+    }
+    
+    setTouchEnd(currentTouch);
   };
 
   const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd || isTransitioning) {
+      setIsDragging(false);
+      setDragOffset(0);
+      setSwipeDirection(null);
+      return;
+    }
     
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+    const isLeftSwipe = distance > minSwipeDistance;   // Swipe left to go to next
+    const isRightSwipe = distance < -minSwipeDistance; // Swipe right to go to previous
+
+    setIsDragging(false);
+    setDragOffset(0);
 
     if (isLeftSwipe) {
+      setSwipeDirection('left');
+      // Immediate transition without delay
       goToNext();
     } else if (isRightSwipe) {
+      setSwipeDirection('right');
+      // Immediate transition without delay
       goToPrevious();
+    } else {
+      // Snap back if swipe wasn't far enough
+      setSwipeDirection(null);
     }
   };
 
-  // Navigation functions
+  // Navigation functions with immediate carousel transitions
   const goToNext = useCallback(() => {
     if (isTransitioning) return;
+    setPreviousIndex(currentIndex);
+    setSwipeDirection('left'); // Next image slides in from left
     setIsTransitioning(true);
     setCurrentIndex((prevIndex) => (prevIndex + 1) % mediaItems.length);
-    setTimeout(() => setIsTransitioning(false), 300);
-  }, [isTransitioning, mediaItems.length]);
+    setTimeout(() => {
+      setIsTransitioning(false);
+      setSwipeDirection(null);
+    }, 350);
+  }, [isTransitioning, mediaItems.length, currentIndex]);
 
   const goToPrevious = useCallback(() => {
     if (isTransitioning) return;
+    setPreviousIndex(currentIndex);
+    setSwipeDirection('right'); // Previous image slides in from right
     setIsTransitioning(true);
     setCurrentIndex((prevIndex) => 
       prevIndex === 0 ? mediaItems.length - 1 : prevIndex - 1
     );
-    setTimeout(() => setIsTransitioning(false), 300);
-  }, [isTransitioning, mediaItems.length]);
+    setTimeout(() => {
+      setIsTransitioning(false);
+      setSwipeDirection(null);
+    }, 350);
+  }, [isTransitioning, mediaItems.length, currentIndex]);
 
   const goToSlide = useCallback((index: number) => {
     if (isTransitioning || index === currentIndex) return;
+    setPreviousIndex(currentIndex);
+    // Determine swipe direction based on index change
+    const direction = index > currentIndex ? 'left' : 'right';
+    setSwipeDirection(direction);
     setIsTransitioning(true);
     setCurrentIndex(index);
-    setTimeout(() => setIsTransitioning(false), 300);
+    setTimeout(() => {
+      setIsTransitioning(false);
+      setSwipeDirection(null);
+    }, 350);
   }, [isTransitioning, currentIndex]);
 
   // Keyboard navigation
@@ -191,41 +253,99 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
       <div className="relative">
         <div
           ref={mainMediaRef}
-          className="relative aspect-square w-full overflow-hidden bg-gray-200"
+          className={`gallery-swipe-container relative aspect-square w-full overflow-hidden ${
+            isDragging ? 'dragging' : ''
+          }`}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Main Media Content */}
-          <div className="relative h-full w-full">
-            {currentMedia.type === 'image' && currentMedia.image ? (
-              <OptimizedImage
-                src={currentMedia.image.url}
-                alt={currentMedia.image.altText || product?.title || 'Product image'}
-                width={600}
-                height={600}
-                quality={98}
-                optimization="gallery"
-                priority={true}
-                loading="eager"
-                className="h-full w-full mobile-gallery-image md:object-cover object-center transition-opacity duration-300"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
-              />
-            ) : currentMedia.type === 'video' && currentMedia.videoSources ? (
-              <OptimizedVideo
-                sources={currentMedia.videoSources}
-                previewImage={currentMedia.previewImage}
-                alt={product?.title || 'Product video'}
-                width={600}
-                height={600}
-                className="h-full w-full mobile-gallery-image md:object-cover"
-                autoplay={autoplay}
-                muted={true}
-                loop={true}
-              />
-            ) : null}
+          {/* Carousel Container with Multiple Slides */}
+          <div 
+            className={`relative h-full w-full overflow-hidden ${
+              isTransitioning ? 'pointer-events-none' : ''
+            }`}
+            style={{
+              transform: isDragging && !isTransitioning ? `translate3d(${-dragOffset * 0.1}px, 0, 0)` : 'translate3d(0, 0, 0)',
+            }}
+          >
+            {/* Previous Slide (exiting) */}
+            {isTransitioning && previousIndex !== currentIndex && (
+              <div 
+                className={`gallery-slide absolute inset-0 h-full w-full ${
+                  swipeDirection === 'left' ? 'animate-slide-out-left' : 'animate-slide-out-right'
+                }`}
+              >
+                {(() => {
+                  const prevMedia = mediaItems[previousIndex];
+                  return prevMedia.type === 'image' && prevMedia.image ? (
+                    <OptimizedImage
+                      src={prevMedia.image.url}
+                      alt={prevMedia.image.altText || product?.title || 'Product image'}
+                      width={600}
+                      height={600}
+                      quality={98}
+                      optimization="gallery"
+                      loading="eager"
+                      className="h-full w-full mobile-gallery-image md:object-cover object-center"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
+                    />
+                  ) : prevMedia.type === 'video' && prevMedia.videoSources ? (
+                    <OptimizedVideo
+                      sources={prevMedia.videoSources}
+                      previewImage={prevMedia.previewImage}
+                      alt={product?.title || 'Product video'}
+                      width={600}
+                      height={600}
+                      className="h-full w-full mobile-gallery-image md:object-cover"
+                      autoplay={false}
+                      muted={true}
+                      loop={true}
+                    />
+                  ) : null;
+                })()}
+              </div>
+            )}
+
+            {/* Current Slide (entering) */}
+            <div 
+              className={`gallery-slide absolute inset-0 h-full w-full ${
+                isTransitioning ? (
+                  swipeDirection === 'left' ? 'animate-slide-in-left' : 'animate-slide-in-right'
+                ) : ''
+              }`}
+            >
+              {currentMedia.type === 'image' && currentMedia.image ? (
+                <OptimizedImage
+                  src={currentMedia.image.url}
+                  alt={currentMedia.image.altText || product?.title || 'Product image'}
+                  width={600}
+                  height={600}
+                  quality={98}
+                  optimization="gallery"
+                  priority={true}
+                  loading="eager"
+                  className="h-full w-full mobile-gallery-image md:object-cover object-center"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
+                />
+              ) : currentMedia.type === 'video' && currentMedia.videoSources ? (
+                <OptimizedVideo
+                  sources={currentMedia.videoSources}
+                  previewImage={currentMedia.previewImage}
+                  alt={product?.title || 'Product video'}
+                  width={600}
+                  height={600}
+                  className="h-full w-full mobile-gallery-image md:object-cover"
+                  autoplay={autoplay}
+                  muted={true}
+                  loop={true}
+                />
+              ) : null}
+            </div>
           </div>
 
+          
+        </div>
           {/* Navigation Arrows */}
           {mediaItems.length > 1 && (
             <>
@@ -256,7 +376,6 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
             </div>
           )}
         </div>
-      </div>
 
       {/* Thumbnail Strip - Desktop Only */}
       {mediaItems.length > 1 && showThumbnails && (

@@ -95,15 +95,26 @@ export interface CartItem {
       amount: string;
       currencyCode: string;
     };
+    selectedOptions?: {
+      name: string;
+      value: string;
+    }[];
+    image?: {
+      id: string;
+      url: string;
+      altText?: string;
+    };
     product: {
       id: string;
       title: string;
       handle: string;
       images: {
-        id: string;
-        url: string;
-        altText?: string;
-      }[];
+        nodes: {
+          id: string;
+          url: string;
+          altText?: string;
+        }[];
+      };
     };
   };
 }
@@ -335,6 +346,15 @@ const CART_QUERY = `
                 amount
                 currencyCode
               }
+              selectedOptions {
+                name
+                value
+              }
+              image {
+                id
+                url
+                altText
+              }
               product {
                 id
                 title
@@ -383,6 +403,11 @@ const CART_CREATE_MUTATION = `
                 price {
                   amount
                   currencyCode
+                }
+                image {
+                  id
+                  url
+                  altText
                 }
                 product {
                   id
@@ -438,6 +463,11 @@ const CART_LINES_ADD_MUTATION = `
                   amount
                   currencyCode
                 }
+                image {
+                  id
+                  url
+                  altText
+                }
                 product {
                   id
                   title
@@ -492,6 +522,11 @@ const CART_LINES_UPDATE_MUTATION = `
                   amount
                   currencyCode
                 }
+                image {
+                  id
+                  url
+                  altText
+                }
                 product {
                   id
                   title
@@ -545,6 +580,11 @@ const CART_LINES_REMOVE_MUTATION = `
                 price {
                   amount
                   currencyCode
+                }
+                image {
+                  id
+                  url
+                  altText
                 }
                 product {
                   id

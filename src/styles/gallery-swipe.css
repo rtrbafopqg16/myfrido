@@ -1,0 +1,160 @@
+/* Gallery Swipe Animations */
+.gallery-swipe-container {
+  touch-action: pan-x;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.gallery-swipe-indicator {
+  animation: fadeInOut 0.3s ease-in-out;
+  z-index: 10;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+/* Advanced swipe animations with hardware acceleration */
+@keyframes slide-in-left {
+  0% {
+    transform: translate3d(100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slide-in-right {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slide-out-left {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+@keyframes slide-out-right {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-slide-out-left {
+  animation: slide-out-left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-slide-out-right {
+  animation: slide-out-right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Gallery slide wrapper */
+.gallery-slide {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Prevent transitions during drag to avoid glitchy feel */
+.gallery-swipe-container.dragging .gallery-slide {
+  transition: none !important;
+}
+
+.gallery-swipe-container.dragging {
+  transition: none !important;
+}
+
+/* Enhanced swipe feedback */
+.gallery-swipe-container:active {
+  cursor: grabbing;
+}
+
+.gallery-swipe-container {
+  cursor: grab;
+}
+
+/* Smooth transitions for all gallery elements - Hardware accelerated */
+.gallery-swipe-container img,
+.gallery-swipe-container video {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.gallery-slide img,
+.gallery-slide video {
+  transform: translate3d(0, 0, 0);
+}
+
+/* Hover effects for desktop */
+@media (hover: hover) {
+  .gallery-swipe-container:hover .gallery-swipe-indicator {
+    opacity: 0.8;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  .gallery-swipe-container {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .gallery-swipe-indicator {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Prevent text selection during swipe */
+.gallery-swipe-container * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Smooth transitions for all interactive elements */
+.gallery-swipe-container button {
+  transition: all 0.2s ease-out;
+}
+
+.gallery-swipe-container button:hover {
+  transform: scale(1.05);
+}
+
+.gallery-swipe-container button:active {
+  transform: scale(0.95);
+}

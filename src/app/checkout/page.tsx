@@ -136,8 +136,16 @@ export default function CheckoutPage() {
                 <div key={item.id} className="flex items-center space-x-4">
                   <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
                     <img
-                      src={item.merchandise.product.images?.[0]?.url || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K'}
-                      alt={item.merchandise.product.images?.[0]?.altText || item.merchandise.product.title}
+                      src={
+                        item.merchandise.image?.url || 
+                        item.merchandise.product.images?.nodes?.[0]?.url || 
+                        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4 humbleZW0iPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K'
+                      }
+                      alt={
+                        item.merchandise.image?.altText || 
+                        item.merchandise.product.images?.nodes?.[0]?.altText || 
+                        item.merchandise.product.title
+                      }
                       className="w-full h-full object-cover"
                     />
                   </div>

@@ -12,19 +12,19 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "D2C Store - Fast & Modern E-commerce",
+  title: "Buy Frido Orthotics Posture Corrector | Posture Corrector",
   description: "A lightning-fast D2C e-commerce website built with Next.js, Shopify, and Sanity CMS",
   keywords: ["e-commerce", "D2C", "shopify", "nextjs", "sanity"],
   authors: [{ name: "D2C Store" }],
   openGraph: {
-    title: "D2C Store - Fast & Modern E-commerce",
+    title: "Buy Frido Orthotics Posture Corrector | Posture Corrector",
     description: "A lightning-fast D2C e-commerce website built with Next.js, Shopify, and Sanity CMS",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "D2C Store - Fast & Modern E-commerce",
+    title: "Buy Frido Orthotics Posture Corrector | Posture Corrector",
     description: "A lightning-fast D2C e-commerce website built with Next.js, Shopify, and Sanity CMS",
   },
 };

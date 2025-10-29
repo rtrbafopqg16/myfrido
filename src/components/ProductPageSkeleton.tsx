@@ -7,11 +7,7 @@ export default function ProductPageSkeleton() {
         {/* Product Gallery Skeleton */}
         <div className="animate-pulse">
           <div className="bg-gray-200 rounded-lg h-96 mb-4"></div>
-          <div className="flex space-x-2">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-gray-200 rounded h-20 w-20"></div>
-            ))}
-          </div>
+          
         </div>
 
         <div className="p-[20px] flex flex-col gap-[20px] bg-[#fff]">

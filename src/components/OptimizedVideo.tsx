@@ -35,20 +35,48 @@ export default function OptimizedVideo({
 }: OptimizedVideoProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    // If video has already loaded, don't show loader
+    if (hasLoadedRef.current) {
+      setIsLoaded(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if video is already cached/ready
+    if (video.readyState >= 2) { // HAVE_CURRENT_DATA
+      setIsLoaded(true);
+      setIsLoading(false);
+      hasLoadedRef.current = true;
+      return;
+    }
+
+    const handleLoadStart = () => {
+      setIsLoading(true);
+    };
+
     const handleLoadedData = () => {
       setIsLoaded(true);
+      setIsLoading(false);
+      hasLoadedRef.current = true;
       if (autoplay) {
         video.play().catch(console.error);
       }
     };
+
+    const handleCanPlay = () => {
+      setIsLoading(false);
+    };
+
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => {
@@ -58,13 +86,17 @@ export default function OptimizedVideo({
       }
     };
 
+    video.addEventListener('loadstart', handleLoadStart);
     video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
     video.addEventListener('ended', handleEnded);
 
     return () => {
+      video.removeEventListener('loadstart', handleLoadStart);
       video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handleEnded);
@@ -184,9 +216,9 @@ export default function OptimizedVideo({
         </div>
       )}
 
-      {/* Loading State */}
-      {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+      {/* Loading State - Only show when actually loading */}
+      {isLoading && !hasLoadedRef.current && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#dddddd]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
         </div>
       )}

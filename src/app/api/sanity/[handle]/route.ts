@@ -77,6 +77,35 @@ const PRODUCT_DATA_QUERY = `
         showThumbnails,
         enableSwipe
       }
+    },
+    "guides": *[_type == "productGuides" && productHandle == $productHandle][0] {
+      _id,
+      _type,
+      productHandle,
+      howToUse {
+        title,
+        videoUrl,
+        thumbnail {
+          asset,
+          alt
+        },
+        steps[] {
+          stepNumber,
+          title,
+          description
+        }
+      },
+      sizeChart {
+        title,
+        tabs[] {
+          tabName,
+          image {
+            asset,
+            alt
+          },
+          description
+        }
+      }
     }
   }
 `;

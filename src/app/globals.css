@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -72,6 +87,16 @@ body {
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: #9ca3af;
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   /* Mobile gallery image fixes */

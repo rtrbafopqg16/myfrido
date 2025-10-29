@@ -4,6 +4,7 @@ import productDescription from './productDescription';
 import productHighlights from './productHighlights';
 import productFAQs from './productFAQs';
 import productGallery from './productGallery';
+import productGuides from './productGuides';
 
 export const schemaTypes = [
   productFeatures,
@@ -12,5 +13,6 @@ export const schemaTypes = [
   productHighlights,
   productFAQs,
   productGallery,
+  productGuides,
 ];
 

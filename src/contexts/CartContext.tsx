@@ -35,7 +35,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
     case 'SET_CART':
-      return { ...state, cart: action.payload, error: null };
+      return { ...state, cart: action.payload, error: null, isLoading: false };
     case 'SET_ERROR':
       return { ...state, error: action.payload, isLoading: false };
     case 'ADD_ITEM':
@@ -130,8 +130,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const { cart } = await response.json();
+        console.log('Cart after adding item:', cart);
+        console.log('Cart line items:', cart.lines.nodes);
         dispatch({ type: 'SET_CART', payload: cart });
       } else {
+        const errorData = await response.json();
+        console.error('Failed to add item to cart:', errorData);
         throw new Error('Failed to add item to cart');
       }
     } catch (error) {
@@ -142,6 +146,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateCartItem = async (lineId: string, quantity: number) => {
     try {
+      // If quantity is 0 or less, remove the item instead
+      if (quantity <= 0) {
+        await removeFromCart(lineId);
+        return;
+      }
+
       dispatch({ type: 'UPDATE_ITEM', payload: { lineId, quantity } });
       
       if (!state.cart?.id) {
