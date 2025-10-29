@@ -272,14 +272,18 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
             {/* Previous Slide (exiting) */}
             {isTransitioning && previousIndex !== currentIndex && (
               <div 
+                key={`prev-${mediaItems[previousIndex]?.id || previousIndex}`}
                 className={`gallery-slide absolute inset-0 h-full w-full ${
                   swipeDirection === 'left' ? 'animate-slide-out-left' : 'animate-slide-out-right'
                 }`}
               >
                 {(() => {
                   const prevMedia = mediaItems[previousIndex];
+                  if (!prevMedia) return null;
+                  
                   return prevMedia.type === 'image' && prevMedia.image ? (
                     <OptimizedImage
+                      key={`prev-image-${prevMedia.id}`}
                       src={prevMedia.image.url}
                       alt={prevMedia.image.altText || product?.title || 'Product image'}
                       width={600}
@@ -287,11 +291,13 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
                       quality={98}
                       optimization="gallery"
                       loading="eager"
+                      priority={false}
                       className="h-full w-full mobile-gallery-image md:object-cover object-center"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
                     />
                   ) : prevMedia.type === 'video' && prevMedia.videoSources ? (
                     <OptimizedVideo
+                      key={`prev-video-${prevMedia.id}`}
                       sources={prevMedia.videoSources}
                       previewImage={prevMedia.previewImage}
                       alt={product?.title || 'Product video'}
@@ -309,6 +315,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
 
             {/* Current Slide (entering) */}
             <div 
+              key={`current-${currentMedia?.id || currentIndex}`}
               className={`gallery-slide absolute inset-0 h-full w-full ${
                 isTransitioning ? (
                   swipeDirection === 'left' ? 'animate-slide-in-left' : 'animate-slide-in-right'
@@ -317,6 +324,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
             >
               {currentMedia.type === 'image' && currentMedia.image ? (
                 <OptimizedImage
+                  key={`current-image-${currentMedia.id}`}
                   src={currentMedia.image.url}
                   alt={currentMedia.image.altText || product?.title || 'Product image'}
                   width={600}
@@ -330,6 +338,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
                 />
               ) : currentMedia.type === 'video' && currentMedia.videoSources ? (
                 <OptimizedVideo
+                  key={`current-video-${currentMedia.id}`}
                   sources={currentMedia.videoSources}
                   previewImage={currentMedia.previewImage}
                   alt={product?.title || 'Product video'}
