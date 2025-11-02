@@ -73,9 +73,9 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
       const firstImageUrl = product.media?.nodes?.[0] && 'image' in product.media.nodes[0]
         ? product.media.nodes[0].image.url
         : undefined;
-      if (firstImageUrl) {
-        const img = new Image();
-        // @ts-ignore
+      if (firstImageUrl && typeof window !== 'undefined') {
+        const img = document.createElement('img');
+        // @ts-ignore - fetchPriority is a valid property but may not be in all TS versions
         img.fetchPriority = 'high';
         img.src = firstImageUrl;
       }

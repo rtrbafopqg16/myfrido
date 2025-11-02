@@ -74,9 +74,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       const calls: Promise<any>[] = [];
       calls.push(fetch(`/api/products/${handle}`, { cache: 'force-cache' }));
       calls.push(fetch(`/api/sanity/${handle}?type=all`, { cache: 'force-cache', headers: { 'Cache-Control': 'max-age=300' } }));
-      if (imageUrl) {
-        const img = new Image();
-        // @ts-ignore
+      if (imageUrl && typeof window !== 'undefined') {
+        const img = document.createElement('img');
+        // @ts-ignore - fetchPriority is a valid property but may not be in all TS versions
         img.fetchPriority = 'high';
         img.src = imageUrl;
       }

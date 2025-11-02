@@ -45,9 +45,9 @@ export function PreloadManager({ images, priority = false, onPreloadComplete }: 
     const totalCount = Math.min(maxPreloadCount, images.length);
 
     const preloadImage = (url: string, index: number) => {
-      if (loadedImages.has(url)) return;
+      if (loadedImages.has(url) || typeof window === 'undefined') return;
 
-      const img = new Image();
+      const img = document.createElement('img');
       preloadRefs.current.set(url, img);
 
       img.onload = () => {
@@ -114,10 +114,13 @@ export function useImagePreloader() {
     const totalCount = urlsToPreload.length;
 
     urlsToPreload.forEach((url, index) => {
-      const img = new Image();
+      if (typeof window === 'undefined') return;
+      
+      const img = document.createElement('img');
       
       // Only set high priority for first few images
       if (priority && index < 2) {
+        // @ts-ignore - fetchPriority is a valid property but may not be in all TS versions
         img.fetchPriority = 'high';
       }
 
@@ -202,12 +205,13 @@ export function GalleryPreloader({
     }
 
     // Preload with high priority - carousel images are critical after initial load
-    if (urlsToPreload.length > 0) {
+    if (urlsToPreload.length > 0 && typeof window !== 'undefined') {
       urlsToPreload.forEach(url => {
         // Mark as preloading to avoid duplicates
         if (preloadedUrls.current.has(url)) return;
         
-        const img = new Image();
+        const img = document.createElement('img');
+        // @ts-ignore - fetchPriority is a valid property but may not be in all TS versions
         img.fetchPriority = 'high';
         img.onload = () => {
           preloadedUrls.current.add(url);
@@ -242,12 +246,13 @@ export function GalleryPreloader({
       }
     }
 
-    if (initialUrls.length > 0) {
+    if (initialUrls.length > 0 && typeof window !== 'undefined') {
       // Preload first image with highest priority, rest with high priority
       initialUrls.forEach((url, index) => {
         if (preloadedUrls.current.has(url)) return;
         
-        const img = new Image();
+        const img = document.createElement('img');
+        // @ts-ignore - fetchPriority is a valid property but may not be in all TS versions
         img.fetchPriority = index === 0 ? 'high' : 'high';
         img.onload = () => {
           preloadedUrls.current.add(url);

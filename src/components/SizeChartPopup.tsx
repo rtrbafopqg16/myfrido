@@ -55,8 +55,8 @@ export default function SizeChartPopup({ isOpen, onClose, tabs, defaultTab = 0 }
     
     [nextTabIndex, prevTabIndex].forEach(tabIndex => {
       const tab = tabs[tabIndex];
-      if (tab?.image?.url) {
-        const img = new Image();
+      if (tab?.image?.url && typeof window !== 'undefined') {
+        const img = document.createElement('img');
         img.src = tab.image.url;
       }
     });

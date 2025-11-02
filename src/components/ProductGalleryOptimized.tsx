@@ -233,13 +233,17 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
 
     // Immediately preload next 2 images and previous 1 image with high priority
     const preloadImage = (media: MediaItem) => {
+      if (typeof window === 'undefined') return;
+      
       if (media.type === 'image' && media.image?.url) {
-        const img = new Image();
+        const img = document.createElement('img');
+        // @ts-ignore - fetchPriority is a valid property but may not be in all TS versions
         img.fetchPriority = 'high';
         img.src = media.image.url;
       }
       if (media.type === 'video' && media.previewImage?.url) {
-        const img = new Image();
+        const img = document.createElement('img');
+        // @ts-ignore - fetchPriority is a valid property but may not be in all TS versions
         img.fetchPriority = 'high';
         img.src = media.previewImage.url;
       }
