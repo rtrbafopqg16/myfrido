@@ -227,6 +227,35 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
     }
   }, [currentIndex]);
 
+  // Aggressive preloading on navigation - ensure next images are ready before swipe completes
+  useEffect(() => {
+    if (!mediaItems.length || mediaItems.length <= 1) return;
+
+    // Immediately preload next 2 images and previous 1 image with high priority
+    const preloadImage = (media: MediaItem) => {
+      if (media.type === 'image' && media.image?.url) {
+        const img = new Image();
+        img.fetchPriority = 'high';
+        img.src = media.image.url;
+      }
+      if (media.type === 'video' && media.previewImage?.url) {
+        const img = new Image();
+        img.fetchPriority = 'high';
+        img.src = media.previewImage.url;
+      }
+    };
+
+    // Preload next 2 images (most common swipe direction)
+    for (let i = 1; i <= 2; i++) {
+      const nextIndex = (currentIndex + i) % mediaItems.length;
+      preloadImage(mediaItems[nextIndex]);
+    }
+
+    // Preload previous 1 image
+    const prevIndex = currentIndex === 0 ? mediaItems.length - 1 : currentIndex - 1;
+    preloadImage(mediaItems[prevIndex]);
+  }, [currentIndex, mediaItems]);
+
   if (!mediaItems.length) {
     return (
       <div className={`aspect-square bg-gray-200 rounded-lg flex items-center justify-center ${className}`}>
@@ -272,6 +301,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
             {/* Previous Slide (exiting) */}
             {isTransitioning && previousIndex !== currentIndex && (
               <div 
+                key={`prev-${previousIndex}`}
                 className={`gallery-slide absolute inset-0 h-full w-full ${
                   swipeDirection === 'left' ? 'animate-slide-out-left' : 'animate-slide-out-right'
                 }`}
@@ -280,6 +310,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
                   const prevMedia = mediaItems[previousIndex];
                   return prevMedia.type === 'image' && prevMedia.image ? (
                     <OptimizedImage
+                      key={`prev-img-${previousIndex}-${prevMedia.image.url}`}
                       src={prevMedia.image.url}
                       alt={prevMedia.image.altText || product?.title || 'Product image'}
                       width={600}
@@ -292,6 +323,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
                     />
                   ) : prevMedia.type === 'video' && prevMedia.videoSources ? (
                     <OptimizedVideo
+                      key={`prev-vid-${previousIndex}`}
                       sources={prevMedia.videoSources}
                       previewImage={prevMedia.previewImage}
                       alt={product?.title || 'Product video'}
@@ -314,29 +346,32 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
                   swipeDirection === 'left' ? 'animate-slide-in-left' : 'animate-slide-in-right'
                 ) : ''
               }`}
+              key={`current-${currentIndex}`}
             >
               {currentMedia.type === 'image' && currentMedia.image ? (
                 <OptimizedImage
+                  key={`current-img-${currentIndex}-${currentMedia.image.url}`}
                   src={currentMedia.image.url}
                   alt={currentMedia.image.altText || product?.title || 'Product image'}
                   width={600}
                   height={600}
                   quality={98}
                   optimization="gallery"
-                  priority={true}
+                  priority={currentIndex === 0}
                   loading="eager"
                   className="h-full w-full mobile-gallery-image md:object-cover object-center"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
                 />
               ) : currentMedia.type === 'video' && currentMedia.videoSources ? (
                 <OptimizedVideo
+                  key={`current-vid-${currentIndex}`}
                   sources={currentMedia.videoSources}
                   previewImage={currentMedia.previewImage}
                   alt={product?.title || 'Product video'}
                   width={600}
                   height={600}
                   className="h-full w-full mobile-gallery-image md:object-cover"
-                  autoplay={autoplay}
+                  autoplay={autoplay && currentIndex === 0}
                   muted={true}
                   loop={true}
                 />

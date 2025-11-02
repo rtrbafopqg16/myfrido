@@ -144,9 +144,9 @@ export default function OptimizedImage({
     return () => observer.disconnect();
   }, [priority, loading]);
 
-  // Generate optimized image URLs when in view
+  // Generate optimized image URLs when in view (or immediately if priority/eager)
   useEffect(() => {
-    if (!isInView) return;
+    if (!isInView && !priority && loading !== 'eager') return;
     
     const generateOptimizedUrls = () => {
       try {
@@ -168,7 +168,7 @@ export default function OptimizedImage({
     };
     
     generateOptimizedUrls();
-  }, [isInView, src, width, height, quality]);
+  }, [isInView, src, width, height, quality, priority, loading]);
 
 
   // Generate blur placeholder
@@ -223,6 +223,7 @@ export default function OptimizedImage({
           width={width}
           height={height}
           loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
           sizes={sizes}
           onLoad={handleLoad}
           onError={handleError}

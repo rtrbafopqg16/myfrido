@@ -22,19 +22,45 @@ interface SizeChartPopupProps {
 
 export default function SizeChartPopup({ isOpen, onClose, tabs, defaultTab = 0 }: SizeChartPopupProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [shouldLoadImages, setShouldLoadImages] = useState(false);
   
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setActiveTab(defaultTab);
+      // Defer image loading until popup is actually opened
+      // Small delay to ensure popup animation starts smoothly
+      const timer = setTimeout(() => {
+        setShouldLoadImages(true);
+      }, 100);
+      return () => clearTimeout(timer);
     } else {
       document.body.style.overflow = 'unset';
+      // Reset image loading state when closed to save memory
+      setShouldLoadImages(false);
     }
     
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, defaultTab]);
+
+  // Preload next tab image when activeTab changes (but only if images should be loaded)
+  useEffect(() => {
+    if (!shouldLoadImages || !tabs || tabs.length === 0) return;
+    
+    // Preload adjacent tab images for smoother switching
+    const nextTabIndex = (activeTab + 1) % tabs.length;
+    const prevTabIndex = activeTab === 0 ? tabs.length - 1 : activeTab - 1;
+    
+    [nextTabIndex, prevTabIndex].forEach(tabIndex => {
+      const tab = tabs[tabIndex];
+      if (tab?.image?.url) {
+        const img = new Image();
+        img.src = tab.image.url;
+      }
+    });
+  }, [activeTab, shouldLoadImages, tabs]);
 
   if (!isOpen || !tabs || tabs.length === 0) return null;
 
@@ -93,16 +119,24 @@ export default function SizeChartPopup({ isOpen, onClose, tabs, defaultTab = 0 }
           <div className="p-5">
             {/* Image */}
             <div className="bg-gray-50 rounded-[16px] overflow-hidden mb-5">
-              <OptimizedImage
-                src={currentTab.image.url}
-                alt={currentTab.image.alt || currentTab.tabName}
-                width={600}
-                height={600}
-                quality={95}
-                optimization="gallery"
-                className="w-full h-auto"
-                sizes="(max-width: 768px) 100vw, 600px"
-              />
+              {shouldLoadImages ? (
+                <OptimizedImage
+                  src={currentTab.image.url}
+                  alt={currentTab.image.alt || currentTab.tabName}
+                  width={600}
+                  height={600}
+                  quality={95}
+                  optimization="gallery"
+                  className="w-full h-auto"
+                  sizes="(max-width: 768px) 100vw, 600px"
+                  loading="eager"
+                  priority={false}
+                />
+              ) : (
+                <div className="aspect-square w-full bg-gray-200 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                </div>
+              )}
             </div>
 
             {/* Description */}

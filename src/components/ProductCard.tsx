@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { HeartIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { useCart } from '@/contexts/CartContext';
@@ -14,11 +15,12 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, className = '' }: ProductCardProps) {
-  console.log('ProductCard: Rendering product:', product.title);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isDirectCheckout, setIsDirectCheckout] = useState(false);
   const { addToCart } = useCart();
+  const router = useRouter();
+  const prefetchingRef = useRef(false);
 
 
   const formatPrice = (amount: string, currencyCode: string) => {
@@ -48,6 +50,43 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     e.preventDefault();
     e.stopPropagation();
     setIsWishlisted(!isWishlisted);
+  };
+
+  // Warm route, APIs, and first image on hover/focus
+  const handlePrefetch = async () => {
+    if (prefetchingRef.current) return;
+    prefetchingRef.current = true;
+    const href = `/products/${product.handle}`;
+    try {
+      // @ts-ignore app router prefetch
+      router.prefetch?.(href);
+
+      const calls: Promise<any>[] = [];
+      calls.push(fetch(`/api/products/${product.handle}`, { cache: 'force-cache' }));
+      calls.push(
+        fetch(`/api/sanity/${product.handle}?type=all`, {
+          cache: 'force-cache',
+          headers: { 'Cache-Control': 'max-age=300' },
+        })
+      );
+
+      const firstImageUrl = product.media?.nodes?.[0] && 'image' in product.media.nodes[0]
+        ? product.media.nodes[0].image.url
+        : undefined;
+      if (firstImageUrl) {
+        const img = new Image();
+        // @ts-ignore
+        img.fetchPriority = 'high';
+        img.src = firstImageUrl;
+      }
+
+      await Promise.race([
+        Promise.allSettled(calls),
+        new Promise((r) => setTimeout(r, 400)),
+      ]);
+    } catch (_e) {
+      // ignore
+    }
   };
 
   const handleDirectCheckout = async (e: React.MouseEvent) => {
@@ -94,7 +133,12 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
 
   return (
     <div className={`group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}>
-      <Link href={`/products/${product.handle}`} className="block">
+      <Link
+        href={`/products/${product.handle}`}
+        className="block"
+        onMouseEnter={handlePrefetch}
+        onFocus={handlePrefetch}
+      >
         <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 relative">
             <OptimizedImage
               src={product.media?.nodes?.[0] && 'image' in product.media.nodes[0] ? product.media.nodes[0].image.url : '/placeholder-product.jpg'}
@@ -102,6 +146,8 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
               width={400}
               height={400}
               optimization="productCard"
+              priority={false}
+              loading="lazy"
               className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />

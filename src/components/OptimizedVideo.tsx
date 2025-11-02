@@ -143,7 +143,7 @@ export default function OptimizedVideo({
         height={height}
         className="w-full h-full mobile-gallery-image md:object-cover"
         poster={previewImage?.url}
-        preload="metadata"
+        preload={autoplay ? "auto" : "metadata"}
         playsInline
         muted={muted}
         loop={loop}

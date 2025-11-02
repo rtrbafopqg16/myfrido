@@ -36,6 +36,33 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${outfit.variable} scroll-smooth`}>
+      <head>
+        {/* Preconnect/DNS-Prefetch to critical origins for faster product loads */}
+        <link rel="preconnect" href="https://cdn.shopify.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="//cdn.shopify.com" />
+        <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="//cdn.sanity.io" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="//res.cloudinary.com" />
+        {/* Shopify Storefront GraphQL and Sanity API domains (runtime via env) */}
+        {process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN && (
+          <link rel="preconnect" href={`https://${process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN}`} crossOrigin="anonymous" />
+        )}
+        {process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN && (
+          <link rel="dns-prefetch" href={`//${process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN}`} />
+        )}
+        {process.env.NEXT_PUBLIC_SANITY_PROJECT_ID && (
+          <link rel="preconnect" href={`https://${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io`} crossOrigin="anonymous" />
+        )}
+        {process.env.NEXT_PUBLIC_SANITY_PROJECT_ID && (
+          <link rel="dns-prefetch" href={`//${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io`} />
+        )}
+        {/* Fonts */}
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+      </head>
       <body className={`${outfit.className} antialiased bg-gray-50`}>
         <CartProvider>
           <div className="min-h-screen flex flex-col">

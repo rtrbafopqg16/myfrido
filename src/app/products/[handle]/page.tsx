@@ -17,8 +17,18 @@ import ProductDescriptionAccordion from '@/components/ProductDescriptionAccordio
 import ProductHighlights from '@/components/ProductHighlights';
 import ProductFAQs from '@/components/ProductFAQs';
 import ProductPageSkeleton from '@/components/ProductPageSkeleton';
-import HowToUsePopup from '@/components/HowToUsePopup';
-import SizeChartPopup from '@/components/SizeChartPopup';
+import dynamic from 'next/dynamic';
+
+// Lazy load popups to avoid blocking initial render
+const HowToUsePopup = dynamic(() => import('@/components/HowToUsePopup'), {
+  ssr: false,
+  loading: () => null, // No loading indicator needed - popups only render when opened
+});
+
+const SizeChartPopup = dynamic(() => import('@/components/SizeChartPopup'), {
+  ssr: false,
+  loading: () => null, // No loading indicator needed - popups only render when opened
+});
 
 export default function ProductPage() {
   const params = useParams();

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface Product {
   id: string;
@@ -30,6 +31,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const prefetchedHandles = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (query.length > 2) {
@@ -59,6 +62,31 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       style: 'currency',
       currency: currencyCode,
     }).format(parseFloat(amount));
+  };
+
+  const prefetchProduct = async (handle: string, imageUrl?: string) => {
+    if (prefetchedHandles.current.has(handle)) return;
+    prefetchedHandles.current.add(handle);
+    const href = `/products/${handle}`;
+    try {
+      // @ts-ignore
+      router.prefetch?.(href);
+      const calls: Promise<any>[] = [];
+      calls.push(fetch(`/api/products/${handle}`, { cache: 'force-cache' }));
+      calls.push(fetch(`/api/sanity/${handle}?type=all`, { cache: 'force-cache', headers: { 'Cache-Control': 'max-age=300' } }));
+      if (imageUrl) {
+        const img = new Image();
+        // @ts-ignore
+        img.fetchPriority = 'high';
+        img.src = imageUrl;
+      }
+      await Promise.race([
+        Promise.allSettled(calls),
+        new Promise((r) => setTimeout(r, 400)),
+      ]);
+    } catch (_e) {
+      // ignore
+    }
   };
 
   return (
@@ -124,6 +152,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             href={`/products/${product.handle}`}
                             className="flex items-center p-4 hover:bg-gray-50 transition-colors duration-200"
                             onClick={onClose}
+                            onMouseEnter={() => prefetchProduct(product.handle, product.images[0]?.url)}
+                            onFocus={() => prefetchProduct(product.handle, product.images[0]?.url)}
                           >
                             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                               <Image

@@ -148,7 +148,7 @@ export function useImagePreloader() {
   };
 }
 
-// Smart gallery preloader with adaptive strategies
+// Smart gallery preloader with aggressive strategies for smooth carousel navigation
 export function GalleryPreloader({ 
   mediaItems, 
   currentIndex 
@@ -161,70 +161,106 @@ export function GalleryPreloader({
   currentIndex: number; 
 }) {
   const { preloadImages, connectionInfo } = useImagePreloader();
+  const preloadedUrls = useRef<Set<string>>(new Set());
 
+  // Aggressive preloading when currentIndex changes - prioritize carousel images
   useEffect(() => {
     if (!mediaItems.length) return;
 
-    // Extract all image URLs
-    const imageUrls: string[] = [];
+    // Always preload current, next, and previous images immediately
+    const urlsToPreload: string[] = [];
     
-    mediaItems.forEach(media => {
+    // Current image (always highest priority)
+    const currentMedia = mediaItems[currentIndex];
+    if (currentMedia.type === 'image' && currentMedia.image?.url) {
+      urlsToPreload.push(currentMedia.image.url);
+    }
+    if (currentMedia.type === 'video' && currentMedia.previewImage?.url) {
+      urlsToPreload.push(currentMedia.previewImage.url);
+    }
+
+    // Next 2 images (swipe forward direction - most common)
+    for (let i = 1; i <= 2; i++) {
+      const nextIndex = (currentIndex + i) % mediaItems.length;
+      const nextMedia = mediaItems[nextIndex];
+      if (nextMedia.type === 'image' && nextMedia.image?.url && !preloadedUrls.current.has(nextMedia.image.url)) {
+        urlsToPreload.push(nextMedia.image.url);
+      }
+      if (nextMedia.type === 'video' && nextMedia.previewImage?.url && !preloadedUrls.current.has(nextMedia.previewImage.url)) {
+        urlsToPreload.push(nextMedia.previewImage.url);
+      }
+    }
+
+    // Previous 1 image (swipe backward)
+    const prevIndex = currentIndex === 0 ? mediaItems.length - 1 : currentIndex - 1;
+    const prevMedia = mediaItems[prevIndex];
+    if (prevMedia.type === 'image' && prevMedia.image?.url && !preloadedUrls.current.has(prevMedia.image.url)) {
+      urlsToPreload.push(prevMedia.image.url);
+    }
+    if (prevMedia.type === 'video' && prevMedia.previewImage?.url && !preloadedUrls.current.has(prevMedia.previewImage.url)) {
+      urlsToPreload.push(prevMedia.previewImage.url);
+    }
+
+    // Preload with high priority - carousel images are critical after initial load
+    if (urlsToPreload.length > 0) {
+      urlsToPreload.forEach(url => {
+        // Mark as preloading to avoid duplicates
+        if (preloadedUrls.current.has(url)) return;
+        
+        const img = new Image();
+        img.fetchPriority = 'high';
+        img.onload = () => {
+          preloadedUrls.current.add(url);
+        };
+        img.onerror = () => {
+          // Still mark as attempted to avoid retry loops
+          preloadedUrls.current.add(url);
+        };
+        img.src = url;
+      });
+      
+      // Also use the hook for tracking
+      preloadImages(urlsToPreload, true);
+    }
+
+  }, [currentIndex, mediaItems, preloadImages]);
+
+  // Initial aggressive preload on mount - preload first 3-4 images immediately
+  useEffect(() => {
+    if (!mediaItems.length) return;
+
+    const initialUrls: string[] = [];
+    const initialCount = Math.min(4, mediaItems.length);
+    
+    for (let i = 0; i < initialCount; i++) {
+      const media = mediaItems[i];
       if (media.type === 'image' && media.image?.url) {
-        imageUrls.push(media.image.url);
+        initialUrls.push(media.image.url);
       }
       if (media.type === 'video' && media.previewImage?.url) {
-        imageUrls.push(media.previewImage.url);
+        initialUrls.push(media.previewImage.url);
       }
-    });
+    }
 
-    // Smart preloading strategy
-    if (connectionInfo.slowConnection) {
-      // On slow connections: only preload current + next image
-      const currentUrl = imageUrls[currentIndex];
-      const nextUrl = imageUrls[(currentIndex + 1) % imageUrls.length];
-      preloadImages([currentUrl, nextUrl].filter(Boolean), true);
-    } else if (connectionInfo.mobile) {
-      // On mobile: preload current + 2 adjacent images
-      const adjacentUrls = [
-        imageUrls[currentIndex],
-        imageUrls[(currentIndex + 1) % imageUrls.length],
-        imageUrls[currentIndex === 0 ? imageUrls.length - 1 : currentIndex - 1]
-      ].filter(Boolean);
-      preloadImages(adjacentUrls, true);
-    } else {
-      // On fast connections: preload all images
-      preloadImages(imageUrls, true);
+    if (initialUrls.length > 0) {
+      // Preload first image with highest priority, rest with high priority
+      initialUrls.forEach((url, index) => {
+        if (preloadedUrls.current.has(url)) return;
+        
+        const img = new Image();
+        img.fetchPriority = index === 0 ? 'high' : 'high';
+        img.onload = () => {
+          preloadedUrls.current.add(url);
+        };
+        img.onerror = () => {
+          preloadedUrls.current.add(url);
+        };
+        img.src = url;
+      });
       
-      // Also preload thumbnail versions
-      const thumbnailUrls = imageUrls.map(url => 
-        url.replace(/w=\d+/, 'w=80').replace(/h=\d+/, 'h=80')
-      );
-      preloadImages(thumbnailUrls, false);
+      preloadImages(initialUrls, true);
     }
-
-  }, [mediaItems, preloadImages, connectionInfo]);
-
-  // Preload adjacent images for smoother navigation
-  useEffect(() => {
-    if (mediaItems.length <= 1 || connectionInfo.slowConnection) return;
-
-    const adjacentUrls: string[] = [];
-    
-    // Get next and previous images
-    const nextIndex = (currentIndex + 1) % mediaItems.length;
-    const prevIndex = currentIndex === 0 ? mediaItems.length - 1 : currentIndex - 1;
-
-    [nextIndex, prevIndex].forEach(index => {
-      const media = mediaItems[index];
-      if (media.type === 'image' && media.image?.url) {
-        adjacentUrls.push(media.image.url);
-      }
-    });
-
-    if (adjacentUrls.length) {
-      preloadImages(adjacentUrls, true);
-    }
-  }, [currentIndex, mediaItems, preloadImages, connectionInfo]);
+  }, [mediaItems, preloadImages]);
 
   return null;
 }

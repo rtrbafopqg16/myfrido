@@ -14,14 +14,22 @@ interface HowToUsePopupProps {
 export default function HowToUsePopup({ isOpen, onClose, videoUrl, productTitle }: HowToUsePopupProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [key, setKey] = useState(0); // Key to force remount video when popup opens
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      // Force remount video to trigger autoplay
-      setKey(prev => prev + 1);
+      // Defer video loading until popup is actually opened
+      // Small delay to ensure popup animation starts smoothly
+      const timer = setTimeout(() => {
+        setShouldLoadVideo(true);
+        setKey(prev => prev + 1);
+      }, 100);
+      return () => clearTimeout(timer);
     } else {
       document.body.style.overflow = 'unset';
+      // Reset video loading state when closed to save memory
+      setShouldLoadVideo(false);
     }
     
     return () => {
@@ -57,23 +65,29 @@ export default function HowToUsePopup({ isOpen, onClose, videoUrl, productTitle 
 
         {/* Video Section */}
         <div className="relative bg-black">
-          <OptimizedVideo
-            key={key}
-            sources={[
-              {
-                url: videoUrl,
-                format: 'mp4',
-                mimeType: 'video/mp4'
-              }
-            ]}
-            alt={`How to use ${productTitle}`}
-            width={600}
-            height={800}
-            className="w-full h-auto"
-            autoplay={true}
-            muted={isMuted}
-            loop={true}
-          />
+          {shouldLoadVideo ? (
+            <OptimizedVideo
+              key={key}
+              sources={[
+                {
+                  url: videoUrl,
+                  format: 'mp4',
+                  mimeType: 'video/mp4'
+                }
+              ]}
+              alt={`How to use ${productTitle}`}
+              width={600}
+              height={800}
+              className="w-full h-auto"
+              autoplay={true}
+              muted={isMuted}
+              loop={true}
+            />
+          ) : (
+            <div className="aspect-video w-full bg-gray-900 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          )}
           
           {/* Mute/Unmute Button */}
           <button
