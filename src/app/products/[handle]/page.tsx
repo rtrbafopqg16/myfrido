@@ -17,6 +17,7 @@ import ProductDescriptionAccordion from '@/components/ProductDescriptionAccordio
 import ProductHighlights from '@/components/ProductHighlights';
 import ProductFAQs from '@/components/ProductFAQs';
 import ProductPageSkeleton from '@/components/ProductPageSkeleton';
+import VariantSelectionPopup from '@/components/VariantSelectionPopup';
 import dynamic from 'next/dynamic';
 
 // Lazy load popups to avoid blocking initial render
@@ -43,12 +44,12 @@ export default function ProductPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isHowToUseOpen, setIsHowToUseOpen] = useState(false);
   const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
+  const [isVariantSelectionOpen, setIsVariantSelectionOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [selectedCombo, setSelectedCombo] = useState<'single' | 'double'>('single');
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [isDirectCheckout, setIsDirectCheckout] = useState(false);
 
   useEffect(() => {
     const fetchProductAndFeatures = async () => {
@@ -99,6 +100,17 @@ export default function ProductPage() {
     };
 
     fetchProductAndFeatures();
+
+    // Listen for size chart open event from variant selection popup
+    const handleOpenSizeChart = () => {
+      setIsSizeChartOpen(true);
+    };
+
+    window.addEventListener('openSizeChart', handleOpenSizeChart);
+    
+    return () => {
+      window.removeEventListener('openSizeChart', handleOpenSizeChart);
+    };
   }, [params.handle]);
 
   const formatPrice = (amount: string, currencyCode: string) => {
@@ -178,7 +190,13 @@ export default function ProductPage() {
   const handleAddToCart = async () => {
     if (!selectedVariant) return;
     
-    // Verify the selected variant before adding
+    // If "Buy 2 units" is selected, open variant selection popup
+    if (selectedCombo === 'double') {
+      setIsVariantSelectionOpen(true);
+      return;
+    }
+    
+    // For single unit, proceed with normal add to cart
     const variant = product?.variants?.nodes?.find(v => v.id === selectedVariant);
     console.log('Adding to cart - Selected variant:', {
       variantId: selectedVariant,
@@ -191,6 +209,24 @@ export default function ProductPage() {
       await addToCart(selectedVariant, quantity);
     } catch (error) {
       console.error('Error adding to cart:', error);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const handleVariantSelectionConfirm = async (variantIds: string[]) => {
+    if (variantIds.length !== 2) return;
+    
+    setIsAddingToCart(true);
+    setIsVariantSelectionOpen(false);
+    
+    try {
+      // Add both variants to cart
+      for (const variantId of variantIds) {
+        await addToCart(variantId, 1);
+      }
+    } catch (error) {
+      console.error('Error adding variants to cart:', error);
     } finally {
       setIsAddingToCart(false);
     }
@@ -217,38 +253,6 @@ export default function ProductPage() {
     }
   };
 
-  const handleDirectCheckout = async () => {
-    if (!selectedVariant) return;
-    
-    setIsDirectCheckout(true);
-    try {
-      // Add to cart first
-      await addToCart(selectedVariant, quantity);
-      
-      // Wait a moment for cart to update, then redirect to checkout
-      setTimeout(() => {
-        // Get the cart from localStorage and redirect to checkout
-        const cartId = localStorage.getItem('shopify-cart-id');
-        if (cartId) {
-          // Fetch cart to get checkout URL
-          fetch(`/api/cart/${encodeURIComponent(cartId)}`)
-            .then(response => response.json())
-            .then(cart => {
-              if (cart.checkoutUrl) {
-                window.location.href = cart.checkoutUrl;
-              }
-            })
-            .catch(error => {
-              console.error('Error getting checkout URL:', error);
-              setIsDirectCheckout(false);
-            });
-        }
-      }, 1000);
-    } catch (error) {
-      console.error('Error in direct checkout:', error);
-      setIsDirectCheckout(false);
-    }
-  };
 
   if (isLoading) {
     return <ProductPageSkeleton />;
@@ -287,12 +291,13 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-md mx-auto">
+      <div className="max-w-[1200px]  mx-auto">
+      <div className="w-full flex md:flex-row flex-col md:gap-[60px] gap-[0px]">
         {/* Product Gallery */}
-        <div className="">
+        <div className="w-full md:w-[58%] md:mt-[20px] mt-[0px]">
             <ProductGallery product={product} sanityGallery={productGallery} />
           </div>
-        <div className="p-[20px] flex flex-col gap-[20px] bg-[#fff]">
+        <div className="md:p-[0] p-[20px] md:mt-[20px] mt-[0px] flex flex-col gap-[20px] bg-[#fff] w-full md:w-[calc(42%-60px)]">
           {/* Rating and Hot Selling Section */}
             <div className="flex items-center space-x-[12px]">
             <div className="border-[1px] border-[#dddddd] rounded-[4px] p-[4px]">
@@ -540,7 +545,7 @@ export default function ProductPage() {
                       }}
                     >
                       <div className="flex justify-between items-center">
-                        <span className="font-normal text-black text-[14px]">Buy 1 Unit</span>
+                        <span className="font-medium text-black text-[14px]">Buy 1 Unit</span>
                         <span className="font-medium text-black text-[18px]">
                           {formatPrice(pricing.singlePrice.toString(), pricing.currencyCode)}
                         </span>
@@ -566,7 +571,7 @@ export default function ProductPage() {
                         </div>
                         
                         <div className="flex justify-between items-center ">
-                          <span className="font-normal text-black text-[14px]">Buy 2 Units</span>
+                          <span className="font-medium text-black text-[14px]">Buy 2 Units</span>
                           <div className="flex flex-col items-end">
                             <span className="text-[#4CAF50] text-[14px] leading-[1] mb-[4px] font-medium">
                               SAVE {formatPrice(pricing.savings.toString(), pricing.currencyCode)}
@@ -711,12 +716,18 @@ export default function ProductPage() {
             className="mb-6"
           />
 
-            {/* Product Highlights */}
-            {productHighlights && (
+     
+
+  
+        </div>
+        </div>
+        
+               {/* Product Highlights */}
+               {productHighlights && (
             <ProductHighlights
               title={productHighlights.title}
               highlights={productHighlights.highlights}
-              className="mb-6"
+              className=" p-[20px]"
             />
           )}
 
@@ -725,13 +736,12 @@ export default function ProductPage() {
             <ProductFAQs
               title={productFAQs.title}
               faqs={productFAQs.faqs}
-              className="mb-6"
+              className="mb-6 p-[20px]"
             />
           )}
-
-  
-        </div>
+        
       </div>
+      
 
       {/* Popups */}
       <HowToUsePopup
@@ -739,6 +749,14 @@ export default function ProductPage() {
         onClose={() => setIsHowToUseOpen(false)}
         videoUrl={productGuides?.howToUse?.videoUrl || 'https://cdn.shopify.com/videos/c/o/v/77427aa5e95b487c85a330da1e3a81fe.mp4'}
         productTitle={product?.title || ''}
+      />
+
+      <VariantSelectionPopup
+        isOpen={isVariantSelectionOpen}
+        onClose={() => setIsVariantSelectionOpen(false)}
+        product={product}
+        onConfirm={handleVariantSelectionConfirm}
+        isAddingToCart={isAddingToCart}
       />
 
       <SizeChartPopup
@@ -776,9 +794,7 @@ export default function ProductPage() {
       {/* Sticky Buttons */}
       <StickyButtons
         onAddToCart={handleAddToCart}
-        onBuyNow={handleDirectCheckout}
         isAddingToCart={isAddingToCart}
-        isDirectCheckout={isDirectCheckout}
         disabled={!product.availableForSale}
       />
     </div>

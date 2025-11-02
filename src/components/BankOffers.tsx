@@ -82,7 +82,7 @@ export default function BankOffers({
     : `flex flex-col gap-[8px] max-h-[${maxHeight}] overflow-y-auto scrollbar-hide`;
 
   const offerCardClasses = orientation === 'horizontal'
-    ? 'min-w-[85vw] flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity'
+    ? 'min-w-[85vw] md:min-w-[380px] flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity'
     : 'bg-[#f5f5f5] rounded-[12px] p-[12px] flex items-center gap-[12px] cursor-pointer hover:bg-[#eeeeee] transition-colors';
 
   return (
@@ -105,8 +105,8 @@ export default function BankOffers({
               onClick={() => handleOfferClick(offer.id)}
             >
               
-                <div className="w-full  flex items-center justify-center">
-                  <img src={offer.logo} alt="Bank Offer" className="w-[85vw]  object-cover" />
+                <div className="w-full  flex items-center">
+                  <img src={offer.logo} alt="Bank Offer" className="w-[85vw] md:w-[380px] " />
                 </div>
             </div>
           ))}

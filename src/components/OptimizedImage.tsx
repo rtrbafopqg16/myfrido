@@ -229,12 +229,14 @@ export default function OptimizedImage({
           onError={handleError}
           className={`transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
+          } ${className}`}
           style={{
-            objectFit: 'cover',
             objectPosition: 'center',
-            width: '100%',
-            height: '100%'
+            width: className.includes('h-auto') ? '100%' : '100%',
+            height: className.includes('h-auto') ? 'auto' : '100%',
+            objectFit: className.includes('object-contain') ? 'contain' : 
+                      className.includes('object-cover') ? 'cover' : 
+                      className.includes('object-fill') ? 'fill' : 'cover'
           }}
         />
       )}
@@ -277,7 +279,7 @@ export function ImageGallery({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Main image */}
-      <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg">
+      <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden ">
         <OptimizedImage
           src={images[selectedIndex]}
           alt={alt}

@@ -273,7 +273,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
   const autoplay = sanityGallery?.settings?.autoplay !== false;
 
   return (
-    <div className={`w-full ${className}`}>
+    <div className={`w-full ${className} flex md:gap-[8px] gap-[0px]`}>
       {/* Smart adaptive preloading for gallery images */}
       <GalleryPreloader mediaItems={mediaItems} currentIndex={currentIndex} />
       
@@ -281,9 +281,67 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
       {process.env.NODE_ENV === 'development' && (
         <PerformanceMonitor />
       )}
-      
+      {/* Thumbnail Strip - Desktop Only */}
+      {mediaItems.length > 1 && showThumbnails && (
+        <div className="hidden md:block">
+          <div className="flex gap-[10px]">
+            <div className="flex-shrink-0 w-[58px] space-y-[4px] overflow-y-auto  scrollbar-hide ">
+              {mediaItems.map((media, index) => (
+                <button
+                  key={media.id}
+                  ref={(el) => { thumbnailRefs.current[index] = el; }}
+                  onClick={() => goToSlide(index)}
+                  className={`relative w-full aspect-square rounded-lg overflow-hidden border-[1px] transition-all duration-200 ${
+                    currentIndex === index 
+                      ? 'border-black ' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  {media.type === 'image' && media.image ? (
+                    <OptimizedImage
+                      src={media.image.url}
+                      alt={media.image.altText || product?.title || 'Product image'}
+                      width={80}
+                      height={80}
+                      quality={90}
+                      optimization="thumbnail"
+                      loading="eager"
+                      className="h-full w-full object-cover object-center"
+                      sizes="58px"
+                    />
+                  ) : media.type === 'video' ? (
+                    <div className="relative h-full w-full">
+                      {media.previewImage ? (
+                        <OptimizedImage
+                          src={media.previewImage.url}
+                          alt={media.previewImage.altText || product?.title || 'Product video'}
+                          width={80}
+                          height={80}
+                          quality={90}
+                          optimization="thumbnail"
+                          loading="eager"
+                          className="h-full w-full object-cover object-center"
+                          sizes="58px"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gray-300 flex items-center justify-center">
+                          <PlayIcon className="h-4 w-4 text-gray-600" />
+                        </div>
+                      )}
+                      {/* Video indicator */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+                        <PlayIcon className="h-3 w-3 text-white" />
+                      </div>
+                    </div>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Mobile-first: Main Media Display */}
-      <div className="relative">
+      <div className="relative w-full md:rounded-[20px] overflow-hidden">
         <div
           ref={mainMediaRef}
           className={`gallery-swipe-container relative aspect-square w-full overflow-hidden ${
@@ -416,65 +474,7 @@ export default function ProductGallery({ product, sanityGallery, className = '' 
           )}
         </div>
 
-      {/* Thumbnail Strip - Desktop Only */}
-      {mediaItems.length > 1 && showThumbnails && (
-        <div className="hidden md:block mt-4">
-          <div className="flex gap-4">
-            <div className="flex-shrink-0 w-20 space-y-2 overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-              {mediaItems.map((media, index) => (
-                <button
-                  key={media.id}
-                  ref={(el) => { thumbnailRefs.current[index] = el; }}
-                  onClick={() => goToSlide(index)}
-                  className={`relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                    currentIndex === index 
-                      ? 'border-blue-500 ring-2 ring-blue-200' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {media.type === 'image' && media.image ? (
-                    <OptimizedImage
-                      src={media.image.url}
-                      alt={media.image.altText || product?.title || 'Product image'}
-                      width={80}
-                      height={80}
-                      quality={90}
-                      optimization="thumbnail"
-                      loading="eager"
-                      className="h-full w-full object-cover object-center"
-                      sizes="80px"
-                    />
-                  ) : media.type === 'video' ? (
-                    <div className="relative h-full w-full">
-                      {media.previewImage ? (
-                        <OptimizedImage
-                          src={media.previewImage.url}
-                          alt={media.previewImage.altText || product?.title || 'Product video'}
-                          width={80}
-                          height={80}
-                          quality={90}
-                          optimization="thumbnail"
-                          loading="eager"
-                          className="h-full w-full object-cover object-center"
-                          sizes="80px"
-                        />
-                      ) : (
-                        <div className="h-full w-full bg-gray-300 flex items-center justify-center">
-                          <PlayIcon className="h-4 w-4 text-gray-600" />
-                        </div>
-                      )}
-                      {/* Video indicator */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
-                        <PlayIcon className="h-3 w-3 text-white" />
-                      </div>
-                    </div>
-                  ) : null}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }

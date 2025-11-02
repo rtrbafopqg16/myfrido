@@ -17,7 +17,6 @@ interface ProductCardProps {
 export default function ProductCard({ product, className = '' }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [isDirectCheckout, setIsDirectCheckout] = useState(false);
   const { addToCart } = useCart();
   const router = useRouter();
   const prefetchingRef = useRef(false);
@@ -89,41 +88,6 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     }
   };
 
-  const handleDirectCheckout = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!product.availableForSale || product.variants.nodes.length === 0) return;
-    
-    setIsDirectCheckout(true);
-    try {
-      // Add to cart first
-      await addToCart(product.variants.nodes[0].id);
-      
-      // Wait a moment for cart to update, then redirect to checkout
-      setTimeout(() => {
-        // Get the cart from localStorage and redirect to checkout
-        const cartId = localStorage.getItem('shopify-cart-id');
-        if (cartId) {
-          // Fetch cart to get checkout URL
-          fetch(`/api/cart/${encodeURIComponent(cartId)}`)
-            .then(response => response.json())
-            .then(cart => {
-              if (cart.checkoutUrl) {
-                window.location.href = cart.checkoutUrl;
-              }
-            })
-            .catch(error => {
-              console.error('Error getting checkout URL:', error);
-              setIsDirectCheckout(false);
-            });
-        }
-      }, 1000);
-    } catch (error) {
-      console.error('Error in direct checkout:', error);
-      setIsDirectCheckout(false);
-    }
-  };
 
   const hasDiscount = product.compareAtPriceRange && 
     parseFloat(product.compareAtPriceRange.minVariantPrice.amount) > parseFloat(product.priceRange.minVariantPrice.amount);
@@ -172,8 +136,8 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
             )}
           </button>
 
-          {/* Quick Add to Cart and Buy Now Buttons */}
-          <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 space-y-2">
+          {/* Quick Add to Cart Button */}
+          <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <button
               onClick={handleAddToCart}
               disabled={!product.availableForSale || isAddingToCart}
@@ -188,22 +152,6 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
                 <>
                   <ShoppingCartIcon className="h-4 w-4" />
                   <span>Quick Add</span>
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleDirectCheckout}
-              disabled={!product.availableForSale || isDirectCheckout}
-              className="w-full bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center space-x-2"
-            >
-              {isDirectCheckout ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent"></div>
-                  <span>Buying...</span>
-                </>
-              ) : (
-                <>
-                  <span>Buy Now</span>
                 </>
               )}
             </button>

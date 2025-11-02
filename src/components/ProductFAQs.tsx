@@ -36,7 +36,7 @@ export default function ProductFAQs({
   return (
     <div className={`bg-white ${className}`}>
       {/* Section Title */}
-      <h2 className="text-black text-[24px] font-medium my-[20px]">
+      <h2 className="text-black text-[24px] md:text-[32px] font-medium my-[20px]">
         {title}
       </h2>
       
@@ -54,7 +54,7 @@ export default function ProductFAQs({
                   onClick={() => toggleItem(faq._key)}
                   className="w-full flex items-center justify-between text-left group"
                 >
-                  <h3 className="text-black text-[16px] leading-[1.3] font-medium pr-[12px] flex-1">
+                  <h3 className="text-black text-[16px] md:text-[20px] leading-[1.3] font-medium pr-[12px] flex-1">
                     {faq.question}
                   </h3>
                   <ChevronUpIcon 
@@ -67,7 +67,7 @@ export default function ProductFAQs({
                 {/* Answer */}
                 {isExpanded && (
                   <div className="mt-[12px]">
-                    <p className="text-[#7e7e7e] text-[14px] font-normal leading-[1.2]">
+                    <p className="text-[#7e7e7e] text-[14px] md:text-[16px]font-normal leading-[1.2]">
                       {faq.answer}
                     </p>
                   </div>
