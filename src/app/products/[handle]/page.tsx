@@ -492,7 +492,10 @@ export default function ProductPage() {
                         </button>
                       ))}
                     </div>
-                  <div className="flex items-center justify-between bg-[#EAF2FC] rounded-[12px] p-[12px]">
+                  <div 
+                    className="flex items-center justify-between bg-[#EAF2FC] rounded-[12px] p-[12px] cursor-pointer hover:bg-[#D8E8F9] transition-colors"
+                    onClick={() => setIsSizeChartOpen(true)}
+                  >
                     <div className="flex items-center gap-[6px]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
                       <g clip-path="url(#clip0_1730_8514)">

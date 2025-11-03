@@ -3,6 +3,7 @@
 import React from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import OptimizedImage from './OptimizedImage';
 
 interface OffersPopupProps {
   isOpen: boolean;
@@ -88,7 +89,18 @@ export default function OffersPopup({ isOpen, onClose }: OffersPopupProps) {
                         position: 'relative'
                       }}
                     >
-                       <img src={offer.url} alt="Offer" className="w-full h-full object-cover" />
+                       <OptimizedImage
+                         src={offer.url}
+                         alt="Offer"
+                         width={600}
+                         height={300}
+                         quality={85}
+                         optimization="gallery"
+                         loading="lazy"
+                         priority={false}
+                         className="w-full h-auto object-contain"
+                         sizes="(max-width: 768px) 100vw, 600px"
+                       />
                     </div>
                     
                   ))}

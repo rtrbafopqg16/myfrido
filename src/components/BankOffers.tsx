@@ -98,15 +98,28 @@ export default function BankOffers({
         
         {/* Offers Container */}
         <div className={containerClasses}>
-          {offers.map((offer) => (
+          {offers.map((offer, index) => (
             <div 
               key={offer.id} 
               className={offerCardClasses}
               onClick={() => handleOfferClick(offer.id)}
             >
               
-                <div className="w-full  flex items-center">
-                  <img src={offer.logo} alt="Bank Offer" className="w-[85vw] md:w-[380px] " />
+                <div className="w-full flex items-center">
+                  <div className="w-[85vw] md:w-[380px]">
+                    <OptimizedImage
+                      src={offer.logo}
+                      alt={offer.alt || offer.bankName}
+                      width={380}
+                      height={200}
+                      quality={85}
+                      optimization="productCard"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      priority={index === 0}
+                      className="w-full h-auto object-contain"
+                      sizes="(max-width: 768px) 85vw, 380px"
+                    />
+                  </div>
                 </div>
             </div>
           ))}
